@@ -544,6 +544,17 @@
 
 #elif LUA_INT_TYPE == LUA_INT_LONGLONG	/* }{ long long */
 
+/*
+** Model 2 NX: devkitA64 (newlib) can reach this without <limits.h> having
+** defined LLONG_MAX in C++, although 'long long' is there. Take the limits
+** from GCC's predefined macros.
+*/
+#if !defined(LLONG_MAX) && defined(__LONG_LONG_MAX__)
+#define LLONG_MAX	__LONG_LONG_MAX__
+#define LLONG_MIN	(-__LONG_LONG_MAX__ - 1LL)
+#define ULLONG_MAX	(__LONG_LONG_MAX__ * 2ULL + 1ULL)
+#endif
+
 /* use presence of macro LLONG_MAX as proxy for C99 compliance */
 #if defined(LLONG_MAX)		/* { */
 /* use ISO C99 stuff */
