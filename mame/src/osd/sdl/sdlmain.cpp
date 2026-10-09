@@ -89,6 +89,11 @@ int main(int argc, char** argv)
 	// MAME opens its game list.
 	SwitchPlatformInit();
 	SwitchInitGamepads();
+
+	// Model 2 NX: some loaders (Ryujinx, some forwarders) start the .nro with
+	// no arguments at all, and MAME's front end needs args[0], the program.
+	if (args.empty())
+		args.emplace_back(MODEL2NX_ROOT "/model2nx.nro");
 #endif
 
 #if defined(SDLMAME_ANDROID)
