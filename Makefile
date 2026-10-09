@@ -141,7 +141,7 @@ endif
 # MAME's own warning set, without -Werror (newer/other compilers warn more).
 WARN := -Wall -Wno-unknown-pragmas -Wno-sign-compare -Wno-conversion -Wno-unused \
 	-Wno-stringop-overflow -Wno-stringop-overread -Wno-nonnull -Wno-array-bounds \
-	-Wno-maybe-uninitialized -Wno-deprecated-declarations
+	-Wno-maybe-uninitialized -Wno-deprecated-declarations -Wno-sfinae-incomplete
 
 BASE_FLAGS := $(ARCH) $(OPT) -pipe -fno-strict-aliasing -ffunction-sections -fdata-sections $(WARN)
 CFLAGS_ALL   := $(BASE_FLAGS) -std=gnu99
