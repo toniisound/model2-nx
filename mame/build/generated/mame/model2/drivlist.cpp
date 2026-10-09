@@ -1,0 +1,192 @@
+#include "emu.h"
+
+#include "drivenum.h"
+
+GAME_EXTERN(___empty);
+GAME_EXTERN(airwlkrs);
+GAME_EXTERN(bel);
+GAME_EXTERN(daytona);
+GAME_EXTERN(daytona93);
+GAME_EXTERN(daytonagtx);
+GAME_EXTERN(daytonam);
+GAME_EXTERN(daytonas);
+GAME_EXTERN(daytonase);
+GAME_EXTERN(daytonat);
+GAME_EXTERN(daytonata);
+GAME_EXTERN(desert);
+GAME_EXTERN(doa);
+GAME_EXTERN(doaa);
+GAME_EXTERN(doaab);
+GAME_EXTERN(doaae);
+GAME_EXTERN(doab);
+GAME_EXTERN(dynabb);
+GAME_EXTERN(dynabb97);
+GAME_EXTERN(dynamcop);
+GAME_EXTERN(dynamcopb);
+GAME_EXTERN(dynamcopc);
+GAME_EXTERN(dyndeka2);
+GAME_EXTERN(dyndeka2b);
+GAME_EXTERN(fvipers);
+GAME_EXTERN(fvipersa);
+GAME_EXTERN(fvipersb);
+GAME_EXTERN(gunblade);
+GAME_EXTERN(hotd);
+GAME_EXTERN(hotdo);
+GAME_EXTERN(hotdp);
+GAME_EXTERN(hpyagu98);
+GAME_EXTERN(indy500);
+GAME_EXTERN(indy500d);
+GAME_EXTERN(indy500to);
+GAME_EXTERN(lastbrnx);
+GAME_EXTERN(lastbrnxj);
+GAME_EXTERN(lastbrnxu);
+GAME_EXTERN(manxtt);
+GAME_EXTERN(manxttc);
+GAME_EXTERN(manxttdx);
+GAME_EXTERN(motoraid);
+GAME_EXTERN(motoraiddx);
+GAME_EXTERN(overrev);
+GAME_EXTERN(overrevb);
+GAME_EXTERN(overrevba);
+GAME_EXTERN(pltkids);
+GAME_EXTERN(pltkidsa);
+GAME_EXTERN(powsled);
+GAME_EXTERN(powsledm);
+GAME_EXTERN(powsledr);
+GAME_EXTERN(rascot2);
+GAME_EXTERN(rchase2);
+GAME_EXTERN(rchase2a);
+GAME_EXTERN(schamp);
+GAME_EXTERN(segawski);
+GAME_EXTERN(sfight);
+GAME_EXTERN(sgt24h);
+GAME_EXTERN(skisuprg);
+GAME_EXTERN(skytargt);
+GAME_EXTERN(srallyc);
+GAME_EXTERN(srallycb);
+GAME_EXTERN(srallycc);
+GAME_EXTERN(srallycdx);
+GAME_EXTERN(srallycdxa);
+GAME_EXTERN(stcc);
+GAME_EXTERN(stcca);
+GAME_EXTERN(stccb);
+GAME_EXTERN(stcco);
+GAME_EXTERN(topskatr);
+GAME_EXTERN(topskatrj);
+GAME_EXTERN(topskatru);
+GAME_EXTERN(topskatruo);
+GAME_EXTERN(vcop);
+GAME_EXTERN(vcop2);
+GAME_EXTERN(vcopa);
+GAME_EXTERN(vf2);
+GAME_EXTERN(vf2a);
+GAME_EXTERN(vf2b);
+GAME_EXTERN(vf2o);
+GAME_EXTERN(von);
+GAME_EXTERN(vonj);
+GAME_EXTERN(vonr);
+GAME_EXTERN(vonu);
+GAME_EXTERN(vstriker);
+GAME_EXTERN(vstrikero);
+GAME_EXTERN(waverunr);
+GAME_EXTERN(zerogun);
+GAME_EXTERN(zeroguna);
+GAME_EXTERN(zerogunaj);
+GAME_EXTERN(zerogunj);
+
+game_driver const *const driver_list::s_drivers_sorted[91] =
+{
+	&GAME_NAME(___empty),
+	&GAME_NAME(airwlkrs),
+	&GAME_NAME(bel),
+	&GAME_NAME(daytona),
+	&GAME_NAME(daytona93),
+	&GAME_NAME(daytonagtx),
+	&GAME_NAME(daytonam),
+	&GAME_NAME(daytonas),
+	&GAME_NAME(daytonase),
+	&GAME_NAME(daytonat),
+	&GAME_NAME(daytonata),
+	&GAME_NAME(desert),
+	&GAME_NAME(doa),
+	&GAME_NAME(doaa),
+	&GAME_NAME(doaab),
+	&GAME_NAME(doaae),
+	&GAME_NAME(doab),
+	&GAME_NAME(dynabb),
+	&GAME_NAME(dynabb97),
+	&GAME_NAME(dynamcop),
+	&GAME_NAME(dynamcopb),
+	&GAME_NAME(dynamcopc),
+	&GAME_NAME(dyndeka2),
+	&GAME_NAME(dyndeka2b),
+	&GAME_NAME(fvipers),
+	&GAME_NAME(fvipersa),
+	&GAME_NAME(fvipersb),
+	&GAME_NAME(gunblade),
+	&GAME_NAME(hotd),
+	&GAME_NAME(hotdo),
+	&GAME_NAME(hotdp),
+	&GAME_NAME(hpyagu98),
+	&GAME_NAME(indy500),
+	&GAME_NAME(indy500d),
+	&GAME_NAME(indy500to),
+	&GAME_NAME(lastbrnx),
+	&GAME_NAME(lastbrnxj),
+	&GAME_NAME(lastbrnxu),
+	&GAME_NAME(manxtt),
+	&GAME_NAME(manxttc),
+	&GAME_NAME(manxttdx),
+	&GAME_NAME(motoraid),
+	&GAME_NAME(motoraiddx),
+	&GAME_NAME(overrev),
+	&GAME_NAME(overrevb),
+	&GAME_NAME(overrevba),
+	&GAME_NAME(pltkids),
+	&GAME_NAME(pltkidsa),
+	&GAME_NAME(powsled),
+	&GAME_NAME(powsledm),
+	&GAME_NAME(powsledr),
+	&GAME_NAME(rascot2),
+	&GAME_NAME(rchase2),
+	&GAME_NAME(rchase2a),
+	&GAME_NAME(schamp),
+	&GAME_NAME(segawski),
+	&GAME_NAME(sfight),
+	&GAME_NAME(sgt24h),
+	&GAME_NAME(skisuprg),
+	&GAME_NAME(skytargt),
+	&GAME_NAME(srallyc),
+	&GAME_NAME(srallycb),
+	&GAME_NAME(srallycc),
+	&GAME_NAME(srallycdx),
+	&GAME_NAME(srallycdxa),
+	&GAME_NAME(stcc),
+	&GAME_NAME(stcca),
+	&GAME_NAME(stccb),
+	&GAME_NAME(stcco),
+	&GAME_NAME(topskatr),
+	&GAME_NAME(topskatrj),
+	&GAME_NAME(topskatru),
+	&GAME_NAME(topskatruo),
+	&GAME_NAME(vcop),
+	&GAME_NAME(vcop2),
+	&GAME_NAME(vcopa),
+	&GAME_NAME(vf2),
+	&GAME_NAME(vf2a),
+	&GAME_NAME(vf2b),
+	&GAME_NAME(vf2o),
+	&GAME_NAME(von),
+	&GAME_NAME(vonj),
+	&GAME_NAME(vonr),
+	&GAME_NAME(vonu),
+	&GAME_NAME(vstriker),
+	&GAME_NAME(vstrikero),
+	&GAME_NAME(waverunr),
+	&GAME_NAME(zerogun),
+	&GAME_NAME(zeroguna),
+	&GAME_NAME(zerogunaj),
+	&GAME_NAME(zerogunj),
+};
+
+std::size_t const driver_list::s_driver_count = 91;
