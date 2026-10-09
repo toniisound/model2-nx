@@ -110,7 +110,7 @@ MAME_FLAC_DEFINES := $(filter-out -DFLAC__SYS_LINUX,$(MAME_FLAC_DEFINES))
 MAME_EXPAT_DEFINES := $(filter-out -DHAVE_GETENTROPY,$(MAME_EXPAT_DEFINES))
 # SQLite is only reached from Lua (plugins, off here): no Unix VFS, which
 # needs file locking and other calls newlib lacks (see osd/nx/sqlite_switch.c).
-MAME_SQLITE3_DEFINES += -DSQLITE_OS_OTHER=1 -DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_LOAD_EXTENSION
+MAME_SQLITE3_DEFINES += -DSQLITE_OS_OTHER=1 -DSQLITE_THREADSAFE=0
 
 else ifeq ($(PLATFORM),linux)
 
