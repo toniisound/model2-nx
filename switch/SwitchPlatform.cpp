@@ -77,6 +77,23 @@ void SwitchPlatformInit()
   const std::string root = MODEL2NX_ROOT;
   MakeDir("sdmc:/switch");
   MakeDir(root);
+
+  // Without nxlink, MAME's console output (errors included) goes to
+  // model2nx.log next to the .nro, line by line so a crash loses nothing.
+  if (!s_nxlink)
+  {
+    // Both streams append, so their lines interleave instead of overwriting.
+    const std::string log = root + "/model2nx.log";
+    if (FILE *f = fopen(log.c_str(), "w"))
+      fclose(f);
+    if (freopen(log.c_str(), "a", stdout))
+    {
+      setvbuf(stdout, nullptr, _IOLBF, 0);
+      if (freopen(log.c_str(), "a", stderr))
+        setvbuf(stderr, nullptr, _IONBF, 0);
+      printf("Model 2 NX starting\n");
+    }
+  }
   // MAME's default folder names (see mame.ini).
   for (const char *sub : { "roms", "cfg", "nvram", "ini", "snap", "diff", "sta", "inp", "comments", "share" })
     MakeDir(root + "/" + sub);
