@@ -20,6 +20,10 @@
 // standard sdl header
 #include <SDL2/SDL.h>
 
+#ifdef SDLMAME_SWITCH
+#include "SwitchPlatform.h"   // Model 2 NX
+#endif
+
 #include <algorithm>
 #include <cmath>
 #include <fstream>
@@ -243,6 +247,16 @@ void sound_sdl::stream_sink_update(uint32_t id, const int16_t *buffer, int sampl
 
 void sound_sdl::sink_callback(void *userdata, uint8_t *data, int len)
 {
+#ifdef SDLMAME_SWITCH
+	// Model 2 NX: move SDL's audio thread off the main core (crackling fix
+	// from SuperModel NX).
+	static thread_local bool s_thread_setup = false;
+	if (!s_thread_setup)
+	{
+		SwitchSetupAudioThread();
+		s_thread_setup = true;
+	}
+#endif
 	stream_info *stream = reinterpret_cast<stream_info *>(userdata);
 	stream->m_buffer.get((int16_t *)data, len / 2 / stream->m_buffer.channels());
 }

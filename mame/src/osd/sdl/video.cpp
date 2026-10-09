@@ -25,6 +25,10 @@
 
 #include <SDL2/SDL.h>
 
+#ifdef SDLMAME_SWITCH
+#include "SwitchPlatform.h"   // Model 2 NX
+#endif
+
 
 //============================================================
 //  GLOBAL VARIABLES
@@ -104,6 +108,13 @@ void sdl_osd_interface::video_exit()
 void sdl_osd_interface::update(bool skip_redraw)
 {
 	osd_common_t::update(skip_redraw);
+
+#ifdef SDLMAME_SWITCH
+	// Model 2 NX: - and + together leave the game (back to the game list),
+	// or MAME itself from the game list, whatever the input mapping is.
+	if (SwitchExitComboPressed())
+		machine().schedule_exit();
+#endif
 
 	// if we're not skipping this redraw, update all windows
 	if (!skip_redraw)

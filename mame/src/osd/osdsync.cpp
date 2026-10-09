@@ -27,6 +27,10 @@
 
 #include "eminline.h"
 
+#ifdef SDLMAME_SWITCH
+#include "SwitchPlatform.h"   // Model 2 NX
+#endif
+
 #if defined(SDLMAME_LINUX) || defined(SDLMAME_BSD) || defined(SDLMAME_HAIKU) || defined(SDLMAME_EMSCRIPTEN) || defined(SDLMAME_MACOSX)
 #include <pthread.h>
 #endif
@@ -90,6 +94,9 @@ int osd_get_num_processors(bool heavy_mt)
 #if defined(SDLMAME_EMSCRIPTEN)
 	// multithreading is not supported at this time
 	return 1;
+#elif defined(SDLMAME_SWITCH)
+	// Model 2 NX: std::thread::hardware_concurrency() is 0 under newlib.
+	return SwitchCoreCount();
 #else
 	unsigned int threads = std::thread::hardware_concurrency();
 	// max out at 4 for now since scaling above that seems to do poorly
@@ -671,6 +678,12 @@ static void *worker_thread_entry(void *param)
 {
 	auto *thread = (work_thread_info *)param;
 	osd_work_queue &queue = thread->queue;
+
+#ifdef SDLMAME_SWITCH
+	// Model 2 NX: new threads start on their creator's core (the main one)
+	// and are never migrated, so spread the workers over the other cores.
+	SwitchPinCurrentThread(SwitchCoreForWorker(thread->id));
+#endif
 
 	// loop until we exit
 	for ( ;; )

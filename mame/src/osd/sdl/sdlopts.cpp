@@ -27,6 +27,8 @@ namespace {
 #ifndef INI_PATH
 #if defined(SDLMAME_WIN32)
 	#define INI_PATH ".;ini;ini/presets"
+#elif defined(SDLMAME_SWITCH)
+	#define INI_PATH ".;ini;ini/presets" // Model 2 NX: relative to sdmc:/switch/model2nx
 #elif defined(SDLMAME_MACOSX)
 	#define INI_PATH "$HOME/Library/Application Support/APP_NAME;$HOME/.APP_NAME;.;ini"
 #else

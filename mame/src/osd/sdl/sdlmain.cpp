@@ -46,6 +46,10 @@
 #include <unistd.h>
 #endif
 
+#ifdef SDLMAME_SWITCH
+#include "SwitchPlatform.h"   // Model 2 NX
+#endif
+
 
 //============================================================
 //  Global variables
@@ -79,6 +83,14 @@ int main(int argc, char** argv)
 	// Initialize crash diagnostics
 	diagnostics_module::get_instance()->init_crash_diagnostics();
 
+#ifdef SDLMAME_SWITCH
+	// Model 2 NX: SD card folders, bundled mame.ini, Switch pad mappings.
+	// Started from the Homebrew Menu, args holds only the .nro's path, so
+	// MAME opens its game list.
+	SwitchPlatformInit();
+	SwitchInitGamepads();
+#endif
+
 #if defined(SDLMAME_ANDROID)
 	/* Enable standard application logging */
 	SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_VERBOSE);
@@ -107,6 +119,10 @@ int main(int argc, char** argv)
 		FcFini();
 	}
 #endif
+#endif
+
+#ifdef SDLMAME_SWITCH
+	SwitchPlatformShutdown();
 #endif
 
 	exit(res);

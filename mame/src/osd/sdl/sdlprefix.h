@@ -22,6 +22,16 @@
 #define SDLMAME_DARWIN 1
 #endif /* __APPLE__ */
 
+// Model 2 NX: Nintendo Switch (libnx, newlib). Not SDLMAME_UNIX: no
+// fontconfig, X11, dlopen or ptys. newlib's off_t is already 64-bit and it
+// has no fopen64/lseek64/etc.
+#if defined(__SWITCH__) && !defined(SDLMAME_SWITCH)
+#define SDLMAME_SWITCH 1
+#endif
+#ifdef SDLMAME_SWITCH
+#define SDLMAME_NO64BITIO 1
+#endif
+
 #ifdef SDLMAME_UNIX
 
 #if defined(__linux__) || defined(__FreeBSD_kernel__)
