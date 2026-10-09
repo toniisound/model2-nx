@@ -148,11 +148,12 @@ endif
 # MAME's own warning set, without -Werror (newer/other compilers warn more).
 WARN := -Wall -Wno-unknown-pragmas -Wno-sign-compare -Wno-conversion -Wno-unused \
 	-Wno-stringop-overflow -Wno-stringop-overread -Wno-nonnull -Wno-array-bounds \
-	-Wno-maybe-uninitialized -Wno-deprecated-declarations -Wno-sfinae-incomplete
+	-Wno-maybe-uninitialized -Wno-deprecated-declarations
 
 BASE_FLAGS := $(ARCH) $(OPT) -pipe -fno-strict-aliasing -ffunction-sections -fdata-sections $(WARN)
 CFLAGS_ALL   := $(BASE_FLAGS) -std=gnu99
-CXXFLAGS_ALL := $(BASE_FLAGS) -std=gnu++20
+# -Wno-sfinae-incomplete: GCC 16 warns about MAME's device_t in every file.
+CXXFLAGS_ALL := $(BASE_FLAGS) -std=gnu++20 -Wno-sfinae-incomplete
 
 #---------------------------------------------------------------------------------
 # Objects

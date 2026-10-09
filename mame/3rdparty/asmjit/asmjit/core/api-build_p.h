@@ -40,7 +40,8 @@
       defined(__DragonFly__) || \
       defined(__FreeBSD__  ) || \
       defined(__NetBSD__   ) || \
-      defined(__OpenBSD__  )
+      defined(__OpenBSD__  ) || \
+      defined(__SWITCH__   ) /* Model 2 NX: newlib, off_t is 64-bit, no open64 */
     #define ASMJIT_FILE64_API(NAME) NAME
   #else
     #define ASMJIT_FILE64_API(NAME) NAME##64
