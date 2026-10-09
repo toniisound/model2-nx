@@ -159,7 +159,12 @@ public:
 	virtual void window_exit() override;
 
 	// SDL-specific
+#ifdef SDLMAME_SWITCH
+	// Model 2 NX: one full-screen window that never gets SDL focus events.
+	virtual bool has_focus() const override { return true; }
+#else
 	virtual bool has_focus() const override { return bool(m_focus_window); }
+#endif
 	void release_keys();
 	bool should_hide_mouse();
 	void process_events_buf();

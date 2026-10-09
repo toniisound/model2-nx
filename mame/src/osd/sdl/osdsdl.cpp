@@ -18,6 +18,10 @@
 
 #include "ui/uimain.h"
 
+#ifdef SDLMAME_SWITCH
+#include "nxlog.h"   // Model 2 NX
+#endif
+
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -477,6 +481,37 @@ void sdl_osd_interface::process_events()
 	SDL_Event event;
 	while (SDL_PollEvent(&event))
 	{
+#ifdef SDLMAME_SWITCH
+		// Model 2 NX: log the first pad events, to see what SDL delivers.
+		{
+			static int s_logged = 0;
+			if (s_logged < 40)
+			{
+				switch (event.type)
+				{
+				case SDL_CONTROLLERBUTTONDOWN:
+					NxLogPrintf("SDL controller %d button %d down (focus %d)\n", int(event.cbutton.which), int(event.cbutton.button), int(has_focus()));
+					s_logged++;
+					break;
+				case SDL_JOYBUTTONDOWN:
+					NxLogPrintf("SDL joystick %d button %d down (focus %d)\n", int(event.jbutton.which), int(event.jbutton.button), int(has_focus()));
+					s_logged++;
+					break;
+				case SDL_CONTROLLERDEVICEADDED:
+				case SDL_JOYDEVICEADDED:
+					NxLogPrintf("SDL device added: type 0x%x index %d\n", unsigned(event.type), int(event.cdevice.which));
+					s_logged++;
+					break;
+				case SDL_WINDOWEVENT:
+					NxLogPrintf("SDL window event %d\n", int(event.window.event));
+					s_logged++;
+					break;
+				default:
+					break;
+				}
+			}
+		}
+#endif
 		// handle UI events
 		switch (event.type)
 		{
