@@ -6,7 +6,8 @@
  * MAME's osdobj_common.cpp registers every module it knows about by name
  * (REGISTER_MODULE), so each one needs a definition even when its source file
  * is not built: BGFX, the Qt/ImGui/GDB-stub debuggers, TAP/TUN and pcap
- * networking and the network output server. These stand-ins say "not
+ * networking and the network output server; also the Win32 debugger,
+ * which MAME registers on every platform. These stand-ins say "not
  * supported", and MAME falls back to the next module of each kind (SDL 2D
  * renderer, no debugger, no network, console output).
  */
@@ -21,6 +22,7 @@ namespace osd {
 namespace {
 
 MODULE_NOT_SUPPORTED(video_bgfx_nx,    OSD_RENDERER_PROVIDER, "bgfx")
+MODULE_NOT_SUPPORTED(debug_win_nx,     OSD_DEBUG_PROVIDER,    "windows")
 MODULE_NOT_SUPPORTED(debug_qt_nx,      OSD_DEBUG_PROVIDER,    "qt")
 MODULE_NOT_SUPPORTED(debug_imgui_nx,   OSD_DEBUG_PROVIDER,    "imgui")
 MODULE_NOT_SUPPORTED(debug_gdbstub_nx, OSD_DEBUG_PROVIDER,    "gdbstub")
@@ -32,6 +34,7 @@ MODULE_NOT_SUPPORTED(output_network_nx, OSD_OUTPUT_PROVIDER,  "network")
 } // namespace osd
 
 MODULE_DEFINITION(RENDERER_BGFX,  osd::video_bgfx_nx)
+MODULE_DEFINITION(DEBUG_WINDOWS,  osd::debug_win_nx)
 MODULE_DEFINITION(DEBUG_QT,       osd::debug_qt_nx)
 MODULE_DEFINITION(DEBUG_IMGUI,    osd::debug_imgui_nx)
 MODULE_DEFINITION(DEBUG_GDBSTUB,  osd::debug_gdbstub_nx)
@@ -44,4 +47,8 @@ MODULE_DEFINITION(OUTPUT_NETWORK, osd::output_network_nx)
 #include "modules/font/font_module.h"
 namespace osd { namespace { MODULE_NOT_SUPPORTED(font_sdl_nx, OSD_FONT_PROVIDER, "sdl") } }
 MODULE_DEFINITION(FONT_SDL, osd::font_sdl_nx)
+
+// sdlmain.cpp starts and stops fontconfig on Unix; nothing to do without it.
+extern "C" int FcInit(void) { return 1; }
+extern "C" void FcFini(void) { }
 #endif

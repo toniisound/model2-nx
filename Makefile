@@ -80,7 +80,8 @@ endif
 
 PLATFORM_INCLUDES := -Iswitch -Iosd/nx/include -I$(PORTLIBS)/include -I$(PORTLIBS)/include/SDL2 -I$(LIBNX)/include
 PLATFORM_SOURCES  := switch/SwitchPlatform.cpp osd/nx/nxstubs.cpp \
-	osd/nx/osdlib_switch.cpp osd/nx/posix_switch.cpp osd/nx/sqlite_switch.c
+	osd/nx/osdlib_switch.cpp osd/nx/posix_switch.cpp osd/nx/sqlite_switch.c \
+	osd/nx/linenoise_stub.c
 
 # Replaced by the osd/nx versions above (no mmap, dlopen, ptys or socket files)
 MAME_OSD_SOURCES := $(filter-out \
@@ -114,7 +115,7 @@ SDL2_CONFIG ?= sdl2-config
 
 PLATFORM_DEFINES  := -DSDLMAME_UNIX -DSDLMAME_LINUX -DPTR64=1
 PLATFORM_INCLUDES := $(shell $(SDL2_CONFIG) --cflags)
-PLATFORM_SOURCES  := osd/nx/nxstubs.cpp
+PLATFORM_SOURCES  := osd/nx/nxstubs.cpp osd/nx/linenoise_stub.c
 
 # No SDL_ttf/fontconfig needed on the PC either: MAME's built-in UI font.
 MAME_OSD_SOURCES := $(filter-out src/osd/modules/font/font_sdl.cpp,$(MAME_OSD_SOURCES))
@@ -167,14 +168,26 @@ $(BUILD)/lib/lib$(1).a: $$($(1)_OBJS)
 ALL_OBJS += $$($(1)_OBJS)
 $(BUILD)/obj/$(1)/%.o: $(MAME)/%.cpp
 	$$(compile_cxx)
+$(BUILD)/obj/$(1)/%.o: $(MAME)/%.cc
+	$$(compile_cxx)
 $(BUILD)/obj/$(1)/%.o: $(MAME)/%.c
-	$$(compile_c)
+	$$(if $$(filter $(1),$$(FORCE_CPP_LIBS)),$$(compile_c_as_cxx),$$(compile_c))
 endef
+
+# Libraries MAME builds as C++ even though their sources are .c files
+# (GENie's ForceCPP): Lua, its libraries and SoftFloat 3.
+FORCE_CPP_LIBS := softfloat3 lua lualibs
 
 define compile_cxx
 @mkdir -p $(dir $@)
 @echo $(patsubst $(MAME)/%,%,$<)
 $(Q)$(CXX) -MMD -MP $(CXXFLAGS_ALL) $(LIB_FLAGS) -c $< -o $@
+endef
+
+define compile_c_as_cxx
+@mkdir -p $(dir $@)
+@echo $(patsubst $(MAME)/%,%,$<)
+$(Q)$(CXX) -MMD -MP -x c++ $(CXXFLAGS_ALL) $(LIB_FLAGS) -c $< -o $@
 endef
 
 define compile_c
@@ -196,8 +209,8 @@ $(OSD_OBJS): LIB_FLAGS := $(MAME_COMMON_DEFINES) $(OSD_DEFINES) $(PLATFORM_DEFIN
 
 PLATFORM_OBJS := $(call objs_of,platform,$(PLATFORM_SOURCES))
 $(PLATFORM_OBJS): LIB_FLAGS := $(MAME_COMMON_DEFINES) $(OSD_DEFINES) $(PLATFORM_DEFINES) \
-	-I$(MAME)/src/osd/modules/lib $(MAME_OSD_INCLUDES) -Iswitch $(PLATFORM_INCLUDES) \
-	-include $(MAME)/src/osd/sdl/sdlprefix.h
+	-I$(MAME)/src/osd/modules/lib $(MAME_OSD_INCLUDES) -I$(MAME)/3rdparty/linenoise \
+	-Iswitch $(PLATFORM_INCLUDES) -include $(MAME)/src/osd/sdl/sdlprefix.h
 
 ALL_OBJS += $(OSD_OBJS) $(PLATFORM_OBJS)
 
