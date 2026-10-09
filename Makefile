@@ -145,7 +145,7 @@ WARN := -Wall -Wno-unknown-pragmas -Wno-sign-compare -Wno-conversion -Wno-unused
 
 BASE_FLAGS := $(ARCH) $(OPT) -pipe -fno-strict-aliasing -ffunction-sections -fdata-sections $(WARN)
 CFLAGS_ALL   := $(BASE_FLAGS) -std=gnu99
-CXXFLAGS_ALL := $(BASE_FLAGS) -std=c++20
+CXXFLAGS_ALL := $(BASE_FLAGS) -std=gnu++20
 
 #---------------------------------------------------------------------------------
 # Objects
