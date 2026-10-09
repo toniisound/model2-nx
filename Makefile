@@ -81,7 +81,11 @@ endif
 PLATFORM_INCLUDES := -Iswitch -Iosd/nx/include -I$(PORTLIBS)/include -I$(PORTLIBS)/include/SDL2 -I$(LIBNX)/include
 PLATFORM_SOURCES  := switch/SwitchPlatform.cpp osd/nx/nxstubs.cpp \
 	osd/nx/osdlib_switch.cpp osd/nx/posix_switch.cpp osd/nx/sqlite_switch.c \
-	osd/nx/linenoise_stub.c
+	osd/nx/linenoise_stub.c osd/nx/http_switch.cpp
+
+# MAME's web server (-http) is built on asio, which needs POSIX networking
+# libnx lacks: osd/nx/http_switch.cpp is the same manager without a server.
+MAME_EMU_SOURCES := $(filter-out src/emu/http.cpp,$(MAME_EMU_SOURCES))
 
 # Replaced by the osd/nx versions above (no mmap, dlopen, ptys or socket files)
 MAME_OSD_SOURCES := $(filter-out \
@@ -213,6 +217,7 @@ $(OSD_OBJS): LIB_FLAGS := $(MAME_COMMON_DEFINES) $(OSD_DEFINES) $(PLATFORM_DEFIN
 PLATFORM_OBJS := $(call objs_of,platform,$(PLATFORM_SOURCES))
 $(PLATFORM_OBJS): LIB_FLAGS := $(MAME_COMMON_DEFINES) $(OSD_DEFINES) $(PLATFORM_DEFINES) \
 	-I$(MAME)/src/osd/modules/lib $(MAME_OSD_INCLUDES) -I$(MAME)/3rdparty/linenoise \
+	$(MAME_EMU_DEFINES) $(MAME_EMU_INCLUDES) \
 	-Iswitch $(PLATFORM_INCLUDES) -include $(MAME)/src/osd/sdl/sdlprefix.h
 
 ALL_OBJS += $(OSD_OBJS) $(PLATFORM_OBJS)
