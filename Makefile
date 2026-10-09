@@ -70,15 +70,17 @@ PKGCONF := $(firstword $(wildcard $(PORTLIBS)/bin/aarch64-none-elf-pkg-config) p
 # NATIVE_DRC=drcbe_c: MAME's recompilers (SHARC on Model 2B, MB86235 on 2C)
 # run their intermediate code through the C back end for now. The ARM64 back
 # end needs the libnx JIT (see docs/roadmap.md).
+# ASMJIT_NO_JIT: asmjit's own executable-memory manager needs mmap; MAME's
+# recompilers use asmjit only to assemble into MAME's own cache.
 PLATFORM_DEFINES := -D__SWITCH__ -DSDLMAME_SWITCH \
-	-DNATIVE_DRC=drcbe_c
+	-DNATIVE_DRC=drcbe_c -DASMJIT_NO_JIT
 ifeq ($(strip $(NXLINK)),1)
 PLATFORM_DEFINES += -DSWITCH_NXLINK
 endif
 
-PLATFORM_INCLUDES := -Iswitch -I$(PORTLIBS)/include -I$(PORTLIBS)/include/SDL2 -I$(LIBNX)/include
+PLATFORM_INCLUDES := -Iswitch -Iosd/nx/include -I$(PORTLIBS)/include -I$(PORTLIBS)/include/SDL2 -I$(LIBNX)/include
 PLATFORM_SOURCES  := switch/SwitchPlatform.cpp osd/nx/nxstubs.cpp \
-	osd/nx/osdlib_switch.cpp osd/nx/posix_switch.cpp
+	osd/nx/osdlib_switch.cpp osd/nx/posix_switch.cpp osd/nx/sqlite_switch.c
 
 # Replaced by the osd/nx versions above (no mmap, dlopen, ptys or socket files)
 MAME_OSD_SOURCES := $(filter-out \
@@ -98,6 +100,9 @@ LIBPATHS := -L$(PORTLIBS)/lib -L$(LIBNX)/lib
 # Lua's POSIX extras (popen, mkstemp) are not in newlib.
 MAME_LUA_DEFINES := $(filter-out -DLUA_USE_POSIX,$(MAME_LUA_DEFINES))
 MAME_FLAC_DEFINES := $(filter-out -DFLAC__SYS_LINUX,$(MAME_FLAC_DEFINES))
+# SQLite is only reached from Lua (plugins, off here): no Unix VFS, which
+# needs file locking and other calls newlib lacks (see osd/nx/sqlite_switch.c).
+MAME_SQLITE3_DEFINES += -DSQLITE_OS_OTHER=1 -DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_LOAD_EXTENSION
 
 else ifeq ($(PLATFORM),linux)
 
@@ -203,6 +208,8 @@ $(BUILD)/obj/osd/%.o: $(MAME)/%.cpp
 	$(compile_cxx)
 $(BUILD)/obj/platform/%.o: %.cpp
 	$(compile_cxx)
+$(BUILD)/obj/platform/%.o: %.c
+	$(compile_c)
 
 #---------------------------------------------------------------------------------
 # Rules
