@@ -101,6 +101,9 @@ LIBPATHS := -L$(PORTLIBS)/lib -L$(LIBNX)/lib
 # Lua's POSIX extras (popen, mkstemp) are not in newlib.
 MAME_LUA_DEFINES := $(filter-out -DLUA_USE_POSIX,$(MAME_LUA_DEFINES))
 MAME_FLAC_DEFINES := $(filter-out -DFLAC__SYS_LINUX,$(MAME_FLAC_DEFINES))
+# expat: no getentropy() in libnx (newlib declares it, nothing implements it);
+# it still has /dev/urandom and its own fallback.
+MAME_EXPAT_DEFINES := $(filter-out -DHAVE_GETENTROPY,$(MAME_EXPAT_DEFINES))
 # SQLite is only reached from Lua (plugins, off here): no Unix VFS, which
 # needs file locking and other calls newlib lacks (see osd/nx/sqlite_switch.c).
 MAME_SQLITE3_DEFINES += -DSQLITE_OS_OTHER=1 -DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_LOAD_EXTENSION
