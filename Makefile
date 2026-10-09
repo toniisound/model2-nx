@@ -81,7 +81,7 @@ endif
 PLATFORM_INCLUDES := -Iswitch -Iosd/nx/include -I$(PORTLIBS)/include -I$(PORTLIBS)/include/SDL2 -I$(LIBNX)/include
 PLATFORM_SOURCES  := switch/SwitchPlatform.cpp osd/nx/nxstubs.cpp \
 	osd/nx/osdlib_switch.cpp osd/nx/posix_switch.cpp osd/nx/sqlite_switch.c \
-	osd/nx/linenoise_stub.c osd/nx/http_switch.cpp
+	osd/nx/linenoise_stub.c osd/nx/http_switch.cpp osd/nx/nxlog.cpp
 
 # MAME's web server (-http) is built on asio, which needs POSIX networking
 # libnx lacks: osd/nx/http_switch.cpp is the same manager without a server.

@@ -48,6 +48,7 @@
 
 #ifdef SDLMAME_SWITCH
 #include "SwitchPlatform.h"   // Model 2 NX
+#include "nxlog.h"
 #endif
 
 
@@ -113,8 +114,16 @@ int main(int argc, char** argv)
 	{
 		sdl_options options;
 		sdl_osd_interface osd(options);
+#ifdef SDLMAME_SWITCH
+		// Model 2 NX: MAME's messages also go to model2nx.log on the SD card.
+		NxLogStartMame();
+#endif
 		osd.register_options();
 		res = emulator_info::start_frontend(options, osd, args);
+#ifdef SDLMAME_SWITCH
+		NxLogStopMame();
+		NxLogPrintf("MAME returned %d\n", res);
+#endif
 	}
 
 #ifdef SDLMAME_UNIX
