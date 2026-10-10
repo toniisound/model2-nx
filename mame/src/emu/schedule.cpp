@@ -37,21 +37,20 @@ struct nx_timer_stat
 {
 	char const *name;
 	u64 count;
+	osd_ticks_t time;
 };
 std::vector<nx_timer_stat> s_nx_timer_stats;
 u64 s_nx_timeslices = 0;
 
-void nx_count_timer(char const *name)
+nx_timer_stat &nx_timer_stat_for(char const *name)
 {
 	if (!name)
 		name = "(unnamed)";
 	for (auto &stat : s_nx_timer_stats)
 		if (stat.name == name)
-		{
-			stat.count++;
-			return;
-		}
-	s_nx_timer_stats.push_back({ name, 1 });
+			return stat;
+	s_nx_timer_stats.push_back({ name, 0, 0 });
+	return s_nx_timer_stats.back();
 }
 
 nx_cpu_stat &nx_cpu_stat_for(device_execute_interface *exec)
@@ -87,9 +86,13 @@ void nx_cpu_report()
 	}
 	NxLogPrintf("scheduler: %.0f timeslices/s\n", double(s_nx_timeslices) / secs);
 	s_nx_timeslices = 0;
-	std::sort(s_nx_timer_stats.begin(), s_nx_timer_stats.end(), [] (nx_timer_stat const &a, nx_timer_stat const &b) { return a.count > b.count; });
+	// timers by the time their callbacks take (video and sound updates run
+	// from timer callbacks too)
+	std::sort(s_nx_timer_stats.begin(), s_nx_timer_stats.end(), [] (nx_timer_stat const &a, nx_timer_stat const &b) { return a.time > b.time; });
 	for (size_t i = 0; i < s_nx_timer_stats.size() && i < 8; i++)
-		NxLogPrintf("timer %-50s %9.0f/s\n", s_nx_timer_stats[i].name, double(s_nx_timer_stats[i].count) / secs);
+		NxLogPrintf("timer %-50s %9.0f/s %5.1f%% of real time\n", s_nx_timer_stats[i].name,
+				double(s_nx_timer_stats[i].count) / secs,
+				100.0 * double(s_nx_timer_stats[i].time) / double(tps) / secs);
 	s_nx_timer_stats.clear();
 	s_nx_report_start = now;
 }
@@ -1066,9 +1069,14 @@ inline void device_scheduler::execute_timers()
 			{
 				LOG("execute_timers: timer callback %s\n", timer.m_callback.name());
 #ifdef SDLMAME_SWITCH
-				nx_count_timer(timer.m_callback.name());
-#endif
+				nx_timer_stat &nx_tstat = nx_timer_stat_for(timer.m_callback.name());
+				osd_ticks_t const nx_tstart = osd_ticks();
 				timer.m_callback(timer.m_param);
+				nx_tstat.time += osd_ticks() - nx_tstart;
+				nx_tstat.count++;
+#else
+				timer.m_callback(timer.m_param);
+#endif
 			}
 		}
 
