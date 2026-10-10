@@ -22,6 +22,10 @@ public:
 	i8251_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock = 0);
 
 	// configuration helpers
+	// Model 2 NX: each pulse on TxC/RxC counts as this many, so a system can
+	// clock the UART at a fraction of the rate (fewer scheduler timers).
+	void set_clock_divider(int divider) { m_clock_divider = divider; }
+
 	auto txd_handler() { return m_txd_handler.bind(); }
 	auto dtr_handler() { return m_dtr_handler.bind(); }
 	auto rts_handler() { return m_rts_handler.bind(); }
@@ -124,6 +128,7 @@ private:
 	int m_rxc_count;
 	int m_txc_count;
 	int m_br_factor;
+	int m_clock_divider = 1;   // Model 2 NX
 
 	uint8_t m_rx_data;         // data being received
 	uint8_t m_tx_data;         // tx buffer

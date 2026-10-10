@@ -706,6 +706,9 @@ void i8251_device::mode_w(uint8_t data)
 				m_br_factor = 64;
 				break;
 		}
+
+		// Model 2 NX: a slower external clock (set_clock_divider)
+		m_br_factor = std::max(1, m_br_factor / m_clock_divider);
 	}
 	else
 	{

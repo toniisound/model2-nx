@@ -2550,7 +2550,15 @@ void model2_state::model2_scsp(machine_config &config)
 	m_uart->rxrdy_handler().set(FUNC(model2_state::sound_ready_w));
 	m_uart->txrdy_handler().set(FUNC(model2_state::sound_ready_w));
 
+#ifdef SDLMAME_SWITCH
+	// Model 2 NX: the 500 kHz UART clock was a million scheduler timers per
+	// emulated second, each one cutting every CPU's timeslice short. An
+	// eighth of it still samples the SCSP's MIDI bits well inside each bit.
+	m_uart->set_clock_divider(8);
+	clock_device &uart_clock(CLOCK(config, "uart_clock", 500000 / 8));
+#else
 	clock_device &uart_clock(CLOCK(config, "uart_clock", 500000)); // 16 times 31.25kHz (standard Sega/MIDI sound data rate)
+#endif
 	uart_clock.signal_handler().set(m_uart, FUNC(i8251_device::write_txc));
 	uart_clock.signal_handler().append(m_uart, FUNC(i8251_device::write_rxc));
 }
@@ -2593,7 +2601,14 @@ void model2o_state::model2o(machine_config &config)
 	m_uart->rxrdy_handler().set(FUNC(model2o_state::sound_ready_w));
 	m_uart->txrdy_handler().set(FUNC(model2o_state::sound_ready_w));
 
+#ifdef SDLMAME_SWITCH
+	// Model 2 NX: clock the UART once per bit (see segam1audio.cpp, whose
+	// UART runs in step with this one).
+	m_uart->set_clock_divider(16);
+	clock_device &uart_clock(CLOCK(config, "uart_clock", 16_MHz_XTAL / 2 / 16 / 16));
+#else
 	clock_device &uart_clock(CLOCK(config, "uart_clock", 16_MHz_XTAL / 2 / 16)); // 16 times 31.25kHz (standard Sega/MIDI sound data rate)
+#endif
 	uart_clock.signal_handler().set(m_uart, FUNC(i8251_device::write_txc));
 	uart_clock.signal_handler().append(m_uart, FUNC(i8251_device::write_rxc));
 

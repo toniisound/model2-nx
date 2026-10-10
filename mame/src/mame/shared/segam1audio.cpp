@@ -75,7 +75,17 @@ void segam1audio_device::device_add_mconfig(machine_config &config)
 	m_uart->rxrdy_handler().set_inputline(m_audiocpu, M68K_IRQ_2);
 	m_uart->txd_handler().set(FUNC(segam1audio_device::output_txd));
 
+#ifdef SDLMAME_SWITCH
+	// Model 2 NX: clock the UART once per bit instead of 16 times. The
+	// 500 kHz clock was a million scheduler timers per emulated second,
+	// each one cutting every CPU's timeslice short. The main board's UART
+	// (model2.cpp) runs from an identical clock, so both still sample each
+	// bit in its middle (they shift on falling edges, sample on rising).
+	m_uart->set_clock_divider(16);
+	clock_device &uart_clock(CLOCK(config, "uart_clock", 16_MHz_XTAL / 2 / 16 / 16));
+#else
 	clock_device &uart_clock(CLOCK(config, "uart_clock", 16_MHz_XTAL / 2 / 16)); // 16 times 31.25kHz (standard Sega/MIDI sound data rate)
+#endif
 	uart_clock.signal_handler().set(m_uart, FUNC(i8251_device::write_txc));
 	uart_clock.signal_handler().append(m_uart, FUNC(i8251_device::write_rxc));
 
