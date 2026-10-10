@@ -5,7 +5,12 @@
 
 #pragma once
 
+// Model 2 NX: no link play on the Switch. The simulation tries to open its
+// sockets every frame (as files: no sockets in this build), which cost time
+// in every vblank.
+#ifndef SDLMAME_SWITCH
 #define M2COMM_SIMULATION
+#endif
 
 #include "osdfile.h"
 
