@@ -31,9 +31,9 @@ DEBUG    ?= 0
 MAME  := mame
 BUILD := build/$(PLATFORM)
 
-APP_TITLE   := Model 2 NX
+APP_TITLE   := Model2 NX
 APP_AUTHOR  := ToniiSound
-APP_VERSION := 0.1.0
+APP_VERSION := 1.0
 
 include mame.mk
 
