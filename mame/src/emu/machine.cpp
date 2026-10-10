@@ -1232,10 +1232,19 @@ void running_machine::nvram_load()
 		{
 			if (!nvram.nvram_load(file))
 				osd_printf_error("Error reading NVRAM file %s\n", file.filename());
+#ifdef SDLMAME_SWITCH
+			else
+				osd_printf_info("NVRAM loaded: %s\n", file.fullpath());   // Model 2 NX
+#endif
 			file.close();
 		}
 		else
+		{
+#ifdef SDLMAME_SWITCH
+			osd_printf_info("NVRAM not found, defaults: %s\n", nvram_filename(nvram.device()));   // Model 2 NX
+#endif
 			nvram.nvram_reset();
+		}
 	}
 }
 
@@ -1251,7 +1260,15 @@ void running_machine::nvram_save()
 		if (nvram.nvram_can_save())
 		{
 			emu_file file(options().nvram_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
-			if (!file.open(nvram_filename(nvram.device())))
+			std::error_condition const nx_err = file.open(nvram_filename(nvram.device()));
+#ifdef SDLMAME_SWITCH
+			// Model 2 NX: MAME says nothing when it cannot create the file
+			if (nx_err)
+				osd_printf_error("Could not create NVRAM file %s (%s)\n", nvram_filename(nvram.device()), nx_err.message());
+			else
+				osd_printf_info("NVRAM saved: %s\n", file.fullpath());
+#endif
+			if (!nx_err)
 			{
 				bool error = false;
 
