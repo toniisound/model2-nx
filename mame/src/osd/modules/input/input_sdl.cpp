@@ -1613,8 +1613,21 @@ public:
 		add_button_assignment(assignments, IPT_START,   { buttonitems[SDL_CONTROLLER_BUTTON_START] });
 #ifdef SDLMAME_SWITCH
 		// Model 2 NX: no Guide button on Switch pads (Home belongs to the
-		// system), so MAME's menu (Tab on a keyboard) goes on R3.
-		add_button_assignment(assignments, IPT_UI_MENU, { buttonitems[SDL_CONTROLLER_BUTTON_RIGHTSTICK] });
+		// system), so MAME's menu (Tab on a keyboard) is L and R together.
+		// The stick buttons are the arcade board's Test (L3, F2 on a
+		// keyboard) and Service (R3, 9) buttons, which move through and
+		// select in the games' own test menus.
+		if ((ITEM_ID_INVALID != buttonitems[SDL_CONTROLLER_BUTTON_LEFTSHOULDER]) && (ITEM_ID_INVALID != buttonitems[SDL_CONTROLLER_BUTTON_RIGHTSHOULDER]))
+		{
+			assignments.emplace_back(
+					IPT_UI_MENU,
+					SEQ_TYPE_STANDARD,
+					input_seq(
+						input_code(DEVICE_CLASS_JOYSTICK, 0, ITEM_CLASS_SWITCH, ITEM_MODIFIER_NONE, buttonitems[SDL_CONTROLLER_BUTTON_LEFTSHOULDER]),
+						input_code(DEVICE_CLASS_JOYSTICK, 0, ITEM_CLASS_SWITCH, ITEM_MODIFIER_NONE, buttonitems[SDL_CONTROLLER_BUTTON_RIGHTSHOULDER])));
+		}
+		add_button_assignment(assignments, IPT_SERVICE,  { buttonitems[SDL_CONTROLLER_BUTTON_LEFTSTICK] });
+		add_button_assignment(assignments, IPT_SERVICE1, { buttonitems[SDL_CONTROLLER_BUTTON_RIGHTSTICK] });
 #else
 		add_button_assignment(assignments, IPT_UI_MENU, { buttonitems[SDL_CONTROLLER_BUTTON_GUIDE] });
 #endif
