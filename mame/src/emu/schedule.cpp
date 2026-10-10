@@ -14,6 +14,7 @@
 #ifdef SDLMAME_SWITCH
 #include "nxlog.h"   // Model 2 NX: CPU time report
 
+#include <algorithm>
 #include <vector>
 
 namespace {
@@ -30,6 +31,28 @@ struct nx_cpu_stat
 
 std::vector<nx_cpu_stat> s_nx_cpu_stats;
 osd_ticks_t s_nx_report_start = 0;
+
+// Timer callbacks by name, to see what keeps the timeslices short.
+struct nx_timer_stat
+{
+	char const *name;
+	u64 count;
+};
+std::vector<nx_timer_stat> s_nx_timer_stats;
+u64 s_nx_timeslices = 0;
+
+void nx_count_timer(char const *name)
+{
+	if (!name)
+		name = "(unnamed)";
+	for (auto &stat : s_nx_timer_stats)
+		if (stat.name == name)
+		{
+			stat.count++;
+			return;
+		}
+	s_nx_timer_stats.push_back({ name, 1 });
+}
 
 nx_cpu_stat &nx_cpu_stat_for(device_execute_interface *exec)
 {
@@ -62,6 +85,12 @@ void nx_cpu_report()
 		stat.time = 0;
 		stat.slices = stat.cycles = 0;
 	}
+	NxLogPrintf("scheduler: %.0f timeslices/s\n", double(s_nx_timeslices) / secs);
+	s_nx_timeslices = 0;
+	std::sort(s_nx_timer_stats.begin(), s_nx_timer_stats.end(), [] (nx_timer_stat const &a, nx_timer_stat const &b) { return a.count > b.count; });
+	for (size_t i = 0; i < s_nx_timer_stats.size() && i < 8; i++)
+		NxLogPrintf("timer %-50s %9.0f/s\n", s_nx_timer_stats[i].name, double(s_nx_timer_stats[i].count) / secs);
+	s_nx_timer_stats.clear();
 	s_nx_report_start = now;
 }
 
@@ -352,6 +381,8 @@ device_scheduler::device_scheduler(running_machine &machine) :
 #ifdef SDLMAME_SWITCH
 	// Model 2 NX: a new machine, new devices
 	s_nx_cpu_stats.clear();
+	s_nx_timer_stats.clear();
+	s_nx_timeslices = 0;
 	s_nx_report_start = 0;
 #endif
 
@@ -457,6 +488,7 @@ void device_scheduler::timeslice()
 {
 #ifdef SDLMAME_SWITCH
 	nx_cpu_report();
+	s_nx_timeslices++;
 #endif
 	bool call_debugger = ((machine().debug_flags & DEBUG_FLAG_ENABLED) != 0);
 
@@ -1033,6 +1065,9 @@ inline void device_scheduler::execute_timers()
 			if (!timer.m_callback.isnull())
 			{
 				LOG("execute_timers: timer callback %s\n", timer.m_callback.name());
+#ifdef SDLMAME_SWITCH
+				nx_count_timer(timer.m_callback.name());
+#endif
 				timer.m_callback(timer.m_param);
 			}
 		}
