@@ -27,6 +27,7 @@
 
 #ifdef SDLMAME_SWITCH
 #include "SwitchPlatform.h"   // Model 2 NX
+#include "nxlog.h"
 #endif
 
 
@@ -116,14 +117,51 @@ void sdl_osd_interface::update(bool skip_redraw)
 		machine().schedule_exit();
 #endif
 
+#ifdef SDLMAME_SWITCH
+	// Model 2 NX: frame timing report in model2nx.log every ~3 seconds:
+	// frames per second, the longest gap between two frames, and how much of
+	// each frame is spent drawing (MAME's renderer and the buffer swap).
+	static osd_ticks_t s_report_start = 0, s_last_update = 0, s_max_gap = 0, s_draw = 0;
+	static unsigned s_updates = 0, s_drawn = 0;
+	osd_ticks_t const tps = osd_ticks_per_second();
+	osd_ticks_t const now = osd_ticks();
+	if (!s_report_start)
+		s_report_start = now;
+	if (s_last_update && now - s_last_update > s_max_gap)
+		s_max_gap = now - s_last_update;
+	s_last_update = now;
+	s_updates++;
+#endif
+
 	// if we're not skipping this redraw, update all windows
 	if (!skip_redraw)
 	{
+#ifdef SDLMAME_SWITCH
+		osd_ticks_t const draw_start = osd_ticks();
+#endif
 //      profiler_mark(PROFILER_BLIT);
 		for (auto const &window : osd_common_t::window_list())
 			window->update();
 //      profiler_mark(PROFILER_END);
+#ifdef SDLMAME_SWITCH
+		s_draw += osd_ticks() - draw_start;
+		s_drawn++;
+#endif
 	}
+
+#ifdef SDLMAME_SWITCH
+	if (now - s_report_start >= 3 * tps)
+	{
+		double const secs = double(now - s_report_start) / double(tps);
+		NxLogPrintf("perf: %.1f updates/s, %.1f drawn/s, longest gap %.1f ms, draw %.2f ms/frame\n",
+				s_updates / secs, s_drawn / secs,
+				1000.0 * double(s_max_gap) / double(tps),
+				s_drawn ? 1000.0 * double(s_draw) / double(tps) / s_drawn : 0.0);
+		s_report_start = now;
+		s_updates = s_drawn = 0;
+		s_max_gap = s_draw = 0;
+	}
+#endif
 
 	// if we're running, disable some parts of the debugger
 	if ((machine().debug_flags & DEBUG_FLAG_OSD_ENABLED) != 0)
