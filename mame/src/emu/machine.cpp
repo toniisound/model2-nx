@@ -10,6 +10,10 @@
 
 #include "emu.h"
 
+#ifdef SDLMAME_SWITCH
+#include "SwitchPlatform.h"   // Model 2 NX
+#endif
+
 #include "config.h"
 #include "crsshair.h"
 #include "debug/debugcpu.h"
@@ -459,6 +463,10 @@ int running_machine::run(bool quiet)
 		if (options().nvram_save())
 			nvram_save();
 		m_configuration->save_settings();
+#ifdef SDLMAME_SWITCH
+		// Model 2 NX: closed from HOME: NVRAM and settings are saved, end now
+		SwitchFinishQuitIfRequested();
+#endif
 	}
 	catch (emu_fatalerror const &fatal)
 	{

@@ -256,8 +256,9 @@ $(TARGET).nacp: Makefile
 
 # Files installed to the SD card on first launch (SwitchPlatform.cpp)
 romfs:
-	@mkdir -p $(ROMFS)
+	@mkdir -p $(ROMFS)/ini/source
 	@cp -u config/switch/mame.ini config/switch/ui.ini $(ROMFS)/
+	@cp -u config/switch/ini/source/model2.ini $(ROMFS)/ini/source/
 else
 all: $(TARGET)
 endif

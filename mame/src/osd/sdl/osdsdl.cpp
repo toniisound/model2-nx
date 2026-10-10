@@ -18,6 +18,10 @@
 
 #include "ui/uimain.h"
 
+#ifdef SDLMAME_SWITCH
+#include "SwitchPlatform.h"   // Model 2 NX
+#endif
+
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -484,6 +488,13 @@ void sdl_osd_interface::process_events()
 		// handle UI events
 		switch (event.type)
 		{
+#ifdef SDLMAME_SWITCH
+		case SDL_QUIT:
+			// Model 2 NX: closed from the HOME menu (see SwitchPlatform.h)
+			SwitchRequestQuit();
+			break;
+#endif
+
 		case SDL_WINDOWEVENT:
 			process_window_event(event);
 			break;

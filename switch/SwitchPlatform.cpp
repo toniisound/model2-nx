@@ -83,6 +83,9 @@ void SwitchPlatformInit()
   NxLogReset();
   NxLogPrintf("Model 2 NX starting\n");
 
+  // Closing from HOME asks first (see SwitchRequestQuit), so NVRAM is saved.
+  appletLockExit();
+
   // MAME's default folder names (see mame.ini).
   for (const char *sub : { "roms", "cfg", "nvram", "ini", "snap", "diff", "sta", "inp", "comments", "share" })
     MakeDir(root + "/" + sub);
@@ -94,7 +97,8 @@ void SwitchPlatformInit()
   // overwritten, so the player's settings survive updates of the .nro.
   if (R_SUCCEEDED(romfsInit()))
   {
-    for (const char *file : { "mame.ini", "ui.ini" })
+    MakeDir(root + "/ini/source");
+    for (const char *file : { "mame.ini", "ui.ini", "ini/source/model2.ini" })
     {
       std::string dest = root + "/" + file;
       if (!FileExists(dest))
@@ -189,4 +193,29 @@ bool SwitchExitComboPressed()
   const bool pressed = both && !wasHeld;
   wasHeld = both;
   return pressed;
+}
+
+static volatile bool s_quit_requested = false;
+
+void SwitchRequestQuit()
+{
+  if (!s_quit_requested)
+    NxLogPrintf("Close requested from the HOME menu\n");
+  s_quit_requested = true;
+}
+
+bool SwitchQuitRequested()
+{
+  return s_quit_requested;
+}
+
+void SwitchFinishQuitIfRequested()
+{
+  if (!s_quit_requested)
+    return;
+  NxLogPrintf("Machine stopped, closing\n");
+  // With the exit request pending, unlocking lets the system end the process.
+  appletUnlockExit();
+  for (;;)
+    svcSleepThread(100'000'000);
 }

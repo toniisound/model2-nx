@@ -60,4 +60,13 @@ void SwitchSetupAudioThread();
 // the MAME input mapping is. Call once per frame.
 bool SwitchExitComboPressed();
 
+// Closing the software from the HOME menu. SwitchPlatformInit() locks the
+// exit, so the system asks instead of killing the process: SDL turns the
+// request into SDL_QUIT, which calls SwitchRequestQuit(). MAME then stops
+// the running machine normally (saving NVRAM and settings) and calls
+// SwitchFinishQuitIfRequested(), which lets the system end the process.
+void SwitchRequestQuit();
+bool SwitchQuitRequested();
+void SwitchFinishQuitIfRequested();
+
 #endif // MODEL2NX_SWITCHPLATFORM_H
