@@ -1,4 +1,4 @@
-# Updating MAME
+# Updating MAME (Model2 NX)
 
 `mame/` holds only the part of MAME the Model 2 driver needs, plus a few
 Switch changes in MAME's SDL front end (each marked `Model 2 NX`). To move to a
