@@ -39,6 +39,9 @@ renderer and swap). Likely candidates:
 
 - i960 (main CPU) and MB86234 (TGP, Model 2/2A) are interpreters: a recompiler
   for one of them, or cheaper scheduling between them.
+- A Switch renderer for MAME's UI and screens that batches its quads (one
+  texture atlas): MAME's "accel" SDL renderer makes one draw call per UI
+  character and ran the menus at under 2 fps, so 0.1 uses "soft".
 - Polygon rendering on the GPU instead of `model2_renderer` (OpenGL through
   Mesa, as SuperModel NX does for Model 3).
 - MAME's scheduler quantum and the `autoframeskip` behaviour.
