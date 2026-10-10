@@ -1611,7 +1611,13 @@ public:
 		// add assignments for buttons with fixed functions
 		add_button_assignment(assignments, IPT_SELECT,  { buttonitems[SDL_CONTROLLER_BUTTON_BACK] });
 		add_button_assignment(assignments, IPT_START,   { buttonitems[SDL_CONTROLLER_BUTTON_START] });
+#ifdef SDLMAME_SWITCH
+		// Model 2 NX: no Guide button on Switch pads (Home belongs to the
+		// system), so MAME's menu (Tab on a keyboard) goes on R3.
+		add_button_assignment(assignments, IPT_UI_MENU, { buttonitems[SDL_CONTROLLER_BUTTON_RIGHTSTICK] });
+#else
 		add_button_assignment(assignments, IPT_UI_MENU, { buttonitems[SDL_CONTROLLER_BUTTON_GUIDE] });
+#endif
 
 		// the first button is always UI select
 		if (add_button_assignment(assignments, IPT_UI_SELECT, { std::get<0>(numberedbuttons[0]) }))
