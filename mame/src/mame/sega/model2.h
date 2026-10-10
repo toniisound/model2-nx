@@ -31,6 +31,12 @@
 
 #include <algorithm>
 
+#ifdef MODEL2NX_ASYNC_GEO
+#include <condition_variable>
+#include <mutex>
+#include <thread>
+#endif
+
 
 class model2_renderer;
 
@@ -105,6 +111,9 @@ public:
 
 protected:
 	virtual void machine_start() override ATTR_COLD;
+#ifdef MODEL2NX_ASYNC_GEO
+	virtual ~model2_state() { geo_async_stop(); }
+#endif
 	virtual void video_start() override ATTR_COLD;
 	virtual void machine_reset() override ATTR_COLD;
 
@@ -152,6 +161,26 @@ protected:
 	u32 m_geo_write_start_address = 0;
 	std::unique_ptr<raster_state> m_raster;
 	std::unique_ptr<geo_state> m_geo;
+#ifdef MODEL2NX_ASYNC_GEO
+	// Model 2 NX: the geometrizer runs on its own thread, one frame behind.
+	// m_raster is the frame being shown (rendered by screen_update),
+	// m_raster_build the one the geometry thread is filling from a copy of
+	// the display list taken at vblank.
+	std::unique_ptr<raster_state> m_raster_build;
+	std::unique_ptr<u32[]> m_geo_buffer;
+	u32 m_geo_buffer_words = 0;
+	u32 m_geo_job_start = 0;
+	std::thread m_geo_thread;
+	std::mutex m_geo_mutex;
+	std::condition_variable m_geo_cv;
+	bool m_geo_job = false;      // a job is queued or running
+	bool m_geo_quit = false;
+	void geo_thread_main();
+	void geo_async_start();
+	void geo_async_wait();
+	void geo_async_stop();
+	static void geo_copy_persistent(raster_state &dst, const raster_state &src);
+#endif
 	bitmap_rgb32 m_sys24_bitmap;
 	u8 m_gearsel = 0;
 	u8 m_lightgun_mux = 0;
@@ -237,8 +266,9 @@ protected:
 
 	u16 crypt_read_callback(u32 addr);
 
-	void render_frame_start();
+	void render_frame_start(raster_state *raster);
 	void geo_parse();
+	void geo_parse_from(raster_state *raster, u32 *buffer, u32 buffer_words, u32 start);
 	void render_polygons(bitmap_rgb32 &bitmap, const rectangle &cliprect);
 	void draw_framebuffer(bitmap_rgb32 &bitmap, const rectangle &cliprect);
 

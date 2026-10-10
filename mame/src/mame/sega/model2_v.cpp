@@ -94,6 +94,10 @@
 
 #include "corefloat.h"
 
+#ifdef SDLMAME_SWITCH
+#include "SwitchPlatform.h"   // Model 2 NX: geometry thread core
+#endif
+
 #include <cmath>
 #include <limits>
 
@@ -279,6 +283,11 @@ void model2_state::raster_init(memory_region *texture_rom)
 
 	m_raster->texture_rom = (u16 *)texture_rom->base();
 	m_raster->texture_rom_mask = (texture_rom->bytes() / 2) - 1;
+#ifdef MODEL2NX_ASYNC_GEO
+	m_raster_build = std::make_unique<raster_state>();
+	m_raster_build->texture_rom = m_raster->texture_rom;
+	m_raster_build->texture_rom_mask = m_raster->texture_rom_mask;
+#endif
 
 	save_item(NAME(m_raster->min_z));
 	save_item(NAME(m_raster->max_z));
@@ -664,9 +673,8 @@ inline void model2_state::model2_3d_project(polygon *poly)
 }
 
 /* 3D Rasterizer frame start: Resets frame variables */
-void model2_state::render_frame_start()
+void model2_state::render_frame_start(raster_state *raster)
 {
-	raster_state *raster = m_raster.get();
 
 	/* reset the polygon list index */
 	raster->poly_list_index = 0;
@@ -685,7 +693,10 @@ void model2_state::render_frame_start()
 
 	raster->cur_window = 0;
 
+#ifndef MODEL2NX_ASYNC_GEO
+	// (async: set when the finished frame is swapped in, on the main thread)
 	m_render_done = false;
+#endif
 }
 
 void model2_state::render_polygons(bitmap_rgb32 &bitmap, const rectangle &cliprect)
@@ -2326,16 +2337,27 @@ u32 *model2_state::geo_process_command(geo_state *geo, u32 opcode, u32 *input, b
 
 void model2_state::geo_parse()
 {
-	u32  address = (m_geo_read_start_address & 0x1ffff)/4;
-	u32 *input = &m_bufferram[address];
+#ifdef MODEL2NX_ASYNC_GEO
+	geo_async_start();
+#else
+	geo_parse_from(m_raster.get(), &m_bufferram[0], 0x20000/4, m_geo_read_start_address);
+#endif
+}
+
+void model2_state::geo_parse_from(raster_state *raster, u32 *buffer, u32 buffer_words, u32 start)
+{
+	u32  address = (start & 0x1ffff)/4;
+	u32 *input = &buffer[address];
 	u32  opcode;
 	u32  op_count = 0;
 	bool end_code = false;
 
-	// reset raster frame variables
-	render_frame_start();
+	m_geo->raster = raster;
 
-	while (end_code == false && (input - m_bufferram) < 0x20000/4 && op_count++ < 0x8000)
+	// reset raster frame variables
+	render_frame_start(raster);
+
+	while (end_code == false && u32(input - buffer) < buffer_words && op_count++ < 0x8000)
 	{
 		/* read in the opcode */
 		opcode = *input++;
@@ -2347,7 +2369,7 @@ void model2_state::geo_parse()
 			address = (opcode & 0x1ffff) / 4;
 
 			/* update our pointer */
-			input = &m_bufferram[address];
+			input = &buffer[address];
 
 			/* go again */
 			continue;
@@ -2357,6 +2379,96 @@ void model2_state::geo_parse()
 		input = geo_process_command(m_geo.get(), opcode, input, &end_code);
 	}
 }
+
+#ifdef MODEL2NX_ASYNC_GEO
+
+// State the rasterizer keeps from one frame to the next (set by display list
+// commands): everything except the per-frame polygon lists.
+void model2_state::geo_copy_persistent(raster_state &dst, const raster_state &src)
+{
+	dst.texture_rom = src.texture_rom;
+	dst.texture_rom_mask = src.texture_rom_mask;
+	std::copy(std::begin(src.viewport), std::end(src.viewport), std::begin(dst.viewport));
+	for (int i = 0; i < 4; i++)
+	{
+		dst.center[i][0] = src.center[i][0];
+		dst.center[i][1] = src.center[i][1];
+	}
+	dst.center_sel = src.center_sel;
+	dst.reverse = src.reverse;
+	dst.z_adjust = src.z_adjust;
+	dst.master_z_clip = src.master_z_clip;
+	dst.cur_command = src.cur_command;
+	std::copy(std::begin(src.command_buffer), std::end(src.command_buffer), std::begin(dst.command_buffer));
+	dst.command_index = src.command_index;
+	std::copy(std::begin(src.texture_ram), std::end(src.texture_ram), std::begin(dst.texture_ram));
+	std::copy(std::begin(src.log_ram), std::end(src.log_ram), std::begin(dst.log_ram));
+	for (int i = 0; i < 4; i++)
+		for (int j = 0; j < 4; j++)
+			dst.clip_plane[i][j] = src.clip_plane[i][j];
+}
+
+void model2_state::geo_thread_main()
+{
+#ifdef SDLMAME_SWITCH
+	// Model 2 NX: off the main emulation core
+	SwitchPinCurrentThread(2);
+#endif
+	std::unique_lock<std::mutex> lock(m_geo_mutex);
+	for (;;)
+	{
+		m_geo_cv.wait(lock, [this] { return m_geo_job || m_geo_quit; });
+		if (m_geo_quit)
+			return;
+		lock.unlock();
+		geo_parse_from(m_raster_build.get(), m_geo_buffer.get(), m_geo_buffer_words, m_geo_job_start);
+		lock.lock();
+		m_geo_job = false;
+		m_geo_cv.notify_all();
+	}
+}
+
+void model2_state::geo_async_wait()
+{
+	std::unique_lock<std::mutex> lock(m_geo_mutex);
+	m_geo_cv.wait(lock, [this] { return !m_geo_job; });
+}
+
+// Called at vblank, when the hardware would start the geometrizer on the
+// display list: the frame built from the previous vblank's list is now the
+// one to show, and this vblank's list is copied for the thread to build.
+void model2_state::geo_async_start()
+{
+	geo_async_wait();
+
+	// the finished frame becomes the one screen_update renders
+	std::swap(m_raster, m_raster_build);
+	m_render_done = false;
+
+	// the new frame starts from the rasterizer state the last one left
+	geo_copy_persistent(*m_raster_build, *m_raster);
+
+	std::copy_n(&m_bufferram[0], m_geo_buffer_words, m_geo_buffer.get());
+	m_geo_job_start = m_geo_read_start_address;
+
+	std::lock_guard<std::mutex> lock(m_geo_mutex);
+	m_geo_job = true;
+	m_geo_cv.notify_all();
+}
+
+void model2_state::geo_async_stop()
+{
+	if (!m_geo_thread.joinable())
+		return;
+	{
+		std::lock_guard<std::mutex> lock(m_geo_mutex);
+		m_geo_quit = true;
+		m_geo_cv.notify_all();
+	}
+	m_geo_thread.join();
+}
+
+#endif // MODEL2NX_ASYNC_GEO
 
 /***********************************************************************************************/
 
@@ -2376,6 +2488,15 @@ void model2_state::video_start()
 
 	/* initialize the geometry engine */
 	geo_init(memregion("polygons"));
+
+#ifdef MODEL2NX_ASYNC_GEO
+	m_geo_buffer_words = std::min<u32>(m_bufferram.bytes() / 4, 0x20000 / 4);
+	m_geo_buffer = make_unique_clear<u32[]>(m_geo_buffer_words);
+	m_geo_quit = false;
+	m_geo_job = false;
+	m_geo_thread = std::thread([this] { geo_thread_main(); });
+	machine().add_notifier(MACHINE_NOTIFY_EXIT, machine_notify_delegate(&model2_state::geo_async_stop, this));
+#endif
 
 	/* init various video-related pointers */
 	m_palram = make_unique_clear<u16[]>(0x4000/2);

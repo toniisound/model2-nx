@@ -278,6 +278,9 @@ void model2c_state::machine_start()
 
 void model2_state::machine_reset()
 {
+#ifdef MODEL2NX_ASYNC_GEO
+	geo_async_wait();   // Model 2 NX: nothing may touch the geometry state while it runs
+#endif
 	m_doa_dummy = true;
 	m_prot_a = 0;
 	m_intreq = 0;

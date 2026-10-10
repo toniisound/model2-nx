@@ -70,10 +70,12 @@ PKGCONF := $(firstword $(wildcard $(PORTLIBS)/bin/aarch64-none-elf-pkg-config) p
 # NATIVE_DRC=drcbe_c: MAME's recompilers (SHARC on Model 2B, MB86235 on 2C)
 # run their intermediate code through the C back end for now. The ARM64 back
 # end needs the libnx JIT (see docs/roadmap.md).
+# MODEL2NX_ASYNC_GEO: Model 2's geometrizer on its own thread, one frame
+# behind (mame/src/mame/sega/model2_v.cpp).
 # ASMJIT_NO_JIT: asmjit's own executable-memory manager needs mmap; MAME's
 # recompilers use asmjit only to assemble into MAME's own cache.
 PLATFORM_DEFINES := -D__SWITCH__ -DSDLMAME_SWITCH \
-	-DNATIVE_DRC=drcbe_c -DASMJIT_NO_JIT
+	-DNATIVE_DRC=drcbe_c -DASMJIT_NO_JIT -DMODEL2NX_ASYNC_GEO
 ifeq ($(strip $(NXLINK)),1)
 PLATFORM_DEFINES += -DSWITCH_NXLINK
 endif
