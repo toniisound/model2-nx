@@ -11,6 +11,63 @@
 #include "emu.h"
 #include "debugger.h"
 
+#ifdef SDLMAME_SWITCH
+#include "nxlog.h"   // Model 2 NX: CPU time report
+
+#include <vector>
+
+namespace {
+
+// Model 2 NX: wall time spent in each CPU device's run(), reported to
+// model2nx.log every ~3 seconds as a share of real time.
+struct nx_cpu_stat
+{
+	device_execute_interface *exec;
+	osd_ticks_t time;
+	u64 slices;
+	u64 cycles;
+};
+
+std::vector<nx_cpu_stat> s_nx_cpu_stats;
+osd_ticks_t s_nx_report_start = 0;
+
+nx_cpu_stat &nx_cpu_stat_for(device_execute_interface *exec)
+{
+	for (auto &stat : s_nx_cpu_stats)
+		if (stat.exec == exec)
+			return stat;
+	s_nx_cpu_stats.push_back({ exec, 0, 0, 0 });
+	return s_nx_cpu_stats.back();
+}
+
+void nx_cpu_report()
+{
+	osd_ticks_t const now = osd_ticks();
+	osd_ticks_t const tps = osd_ticks_per_second();
+	if (!s_nx_report_start)
+	{
+		s_nx_report_start = now;
+		return;
+	}
+	if (now - s_nx_report_start < 3 * tps)
+		return;
+	double const secs = double(now - s_nx_report_start) / double(tps);
+	for (auto &stat : s_nx_cpu_stats)
+	{
+		NxLogPrintf("cpu %-14s %5.1f%% of real time, %7.0f slices/s, %6.2f MHz emulated\n",
+				stat.exec->device().tag(),
+				100.0 * double(stat.time) / double(tps) / secs,
+				double(stat.slices) / secs,
+				double(stat.cycles) / secs / 1e6);
+		stat.time = 0;
+		stat.slices = stat.cycles = 0;
+	}
+	s_nx_report_start = now;
+}
+
+} // anonymous namespace
+#endif
+
 //**************************************************************************
 //  DEBUGGING
 //**************************************************************************
@@ -292,6 +349,12 @@ device_scheduler::device_scheduler(running_machine &machine) :
 	m_suspend_changes_pending(true),
 	m_quantum_minimum(ATTOSECONDS_IN_NSEC(1) / 1000)
 {
+#ifdef SDLMAME_SWITCH
+	// Model 2 NX: a new machine, new devices
+	s_nx_cpu_stats.clear();
+	s_nx_report_start = 0;
+#endif
+
 	// append a single never-expiring timer so there is always one in the list
 	// need to subvert it because it would naturally be inserted in the inactive list
 	m_timer_list = &timer_list_remove(m_timer_allocator.alloc()->init(machine, timer_expired_delegate(), attotime::never, 0, true));
@@ -392,6 +455,9 @@ inline void device_scheduler::apply_suspend_changes()
 
 void device_scheduler::timeslice()
 {
+#ifdef SDLMAME_SWITCH
+	nx_cpu_report();
+#endif
 	bool call_debugger = ((machine().debug_flags & DEBUG_FLAG_ENABLED) != 0);
 
 	// build the execution list if we don't have one yet
@@ -454,7 +520,18 @@ void device_scheduler::timeslice()
 						m_executing_device = exec;
 						*exec->m_icountptr = exec->m_cycles_running;
 						if (!call_debugger)
+						{
+#ifdef SDLMAME_SWITCH
+							osd_ticks_t const nx_start = osd_ticks();
 							exec->run();
+							nx_cpu_stat &nx_stat = nx_cpu_stat_for(exec);
+							nx_stat.time += osd_ticks() - nx_start;
+							nx_stat.slices++;
+							nx_stat.cycles += exec->m_cycles_running - *exec->m_icountptr;
+#else
+							exec->run();
+#endif
+						}
 						else
 						{
 							exec->debugger_start_cpu_hook(target);
