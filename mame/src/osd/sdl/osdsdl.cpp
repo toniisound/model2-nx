@@ -319,7 +319,11 @@ void sdl_osd_interface::init(running_machine &machine)
 
 
 
-#ifdef SDLMAME_EMSCRIPTEN
+#if defined(SDLMAME_EMSCRIPTEN) || defined(SDLMAME_SWITCH)
+	// Model 2 NX: on the Switch, SDL's joystick driver skips every pad update
+	// while text input is "active" (SDL_IsTextInputActive() just checks that
+	// SDL_TEXTINPUT events are enabled), so the pads never sent anything.
+	// There is no keyboard to type with anyway.
 	SDL_EventState(SDL_TEXTINPUT, SDL_FALSE);
 #else
 	SDL_EventState(SDL_TEXTINPUT, SDL_TRUE);
