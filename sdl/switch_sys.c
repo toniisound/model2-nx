@@ -13,6 +13,7 @@ void m2sw_init(void)
     mkdir("sdmc:/switch/Model2-NX", 0755);
     mkdir("sdmc:/switch/Model2-NX/roms", 0755);
     mkdir("sdmc:/switch/Model2-NX/NVDATA", 0755);
+    mkdir("sdmc:/switch/Model2-NX/Covers", 0755);
 }
 
 void m2sw_pin_thread(int core)
