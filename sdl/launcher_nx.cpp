@@ -549,7 +549,7 @@ int m2launch_init(SDL_Window *win, SDL_GLContext ctx, int es)
     io.IniFilename = NULL;
     ImGui::StyleColorsDark();
     ImGuiStyle &style = ImGui::GetStyle();
-    style.FontScaleMain = 1.5f;   /* readable on a TV and on the handheld screen */
+    style.FontScaleMain = 1.7f;   /* readable on a TV and on the handheld screen */
     style.ScaleAllSizes(1.5f);
     if (!ImGui_ImplSDL2_InitForOpenGL(win, ctx) || !ImGui_ImplM2GL_Init(es != 0))
         return -1;
@@ -803,7 +803,7 @@ bool ensure_context()
     io.Fonts->AddFontDefaultVector();
     ImGui::StyleColorsDark();
     ImGuiStyle &style = ImGui::GetStyle();
-    style.FontScaleMain = 1.6f;
+    style.FontScaleMain = 1.8f;
     style.ScaleAllSizes(1.6f);
     style.WindowRounding = 8.0f;
     style.FrameRounding = 6.0f;
