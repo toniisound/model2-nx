@@ -35,25 +35,42 @@ The folders are created on the first run if they're missing.
 | `sdmc:/switch/Model2-NX/roms/` | ROM zips |
 | `sdmc:/switch/Model2-NX/NVDATA/` | save data (`<game>.DAT`, same format as the PC emulator's) |
 | `sdmc:/switch/Model2-NX/m2emu.ini` | settings, written by the launcher |
+| `sdmc:/switch/Model2-NX/Covers/` | optional game covers (`<set>.png` / `.jpg`) |
 | `sdmc:/switch/Model2-NX/gamecontrollerdb.txt` | optional extra pad mappings |
 
-## Controls
+## Menu
 
-### Launcher
+The menu works like SuperModel NX's: the logo on top, the list of games on the
+left and the cover of the game under the cursor on the right.
 
 | Button | Action |
 |--------|--------|
 | D-pad / left stick | move |
-| A | choose |
+| A | start the game under the cursor |
+| + | settings (and back to the game list) |
 | B | back |
-| + | exit to the Homebrew Menu |
+| HOME | close the program |
 | Touch screen | works as a mouse |
 
-The launcher has two tabs: **Games** (pick a game; for Daytona USA tick
-"Two players, linked" for split-screen play) and **Configuration** (widescreen,
-render scale, texture filtering, saturation, gamma, shifter type and more).
+The settings have five tabs:
 
-### In game
+- **General**: FPS on screen, only show the games found in the ROMs folder,
+  Daytona USA linked play (split screen) and its layout, Load Defaults.
+- **Core**: pipeline (emulation on its own core), frame limiter, VSync.
+- **Video**: resolution, widescreen, texture filter, scaling filter, shadows and
+  fences, linked-play picture shape, saturation, gamma.
+- **Audio**: volume.
+- **Credits**.
+
+Settings are saved to `m2emu.ini` as you change them.
+
+### Covers
+
+Put your own covers in `sdmc:/switch/Model2-NX/Covers/`, named after the ROM set:
+`daytona.png`, `vf2.jpg`, `srallyc.png`... (PNG or JPEG). A clone without a
+cover of its own shows its parent's. None are included.
+
+## In game
 
 | Button | Daytona USA / Sega Rally | Virtua Fighter 2 |
 |--------|--------------------------|------------------|
@@ -65,7 +82,10 @@ render scale, texture filtering, saturation, gamma, shifter type and more).
 | + | start | start |
 | − | coin | coin |
 | L3 / R3 (stick click) | service / test | service / test |
-| **− and + together** | **back to the launcher** | **back to the launcher** |
+| **− and + together** | **pause menu** | **pause menu** |
+
+The pause menu stops the game and offers **Reset**, **Exit** (back to the game
+list) and **Cancel**.
 
 Linked play (Daytona USA) needs two controllers: the first one drives player 1
 (left or top half), the second one player 2.
@@ -82,8 +102,9 @@ differs, under `#ifdef __SWITCH__`:
 - Board thread on core 1, sound thread on core 2, drawing on core 0.
 - CPU boost (1785 MHz) while a game runs, back to normal in the launcher; no
   auto-sleep during play.
-- Controller-only shortcuts: − + + to leave a game, L3 / R3 for service / test,
-  + to quit from the launcher.
+- SuperModel NX's menu (game list with logo and covers, settings tabs) and its
+  pause menu on − and +, drawn with Dear ImGui over the game.
+- L3 / R3 for the cabinet's service / test buttons.
 
 ## Building
 
@@ -98,7 +119,8 @@ Or with Docker, no local install needed:
 This writes `Model2-NX.nro`. Every push is also built by GitHub Actions
 (`.github/workflows/switch.yml`); the `.nro` is on the run's page under Artifacts.
 
-The desktop build (Linux / Windows) still works with the original `Makefile`.
+The desktop build (Linux / Windows) still works with the original `Makefile`
+(`make NX_UI=1` builds it with this menu instead of the upstream launcher).
 `docs/PORT_GUIDE.md` is the upstream guide: every option, the threads, the
 headless `m2run` tool and how to check that a change leaves the output alone.
 
@@ -109,7 +131,8 @@ headless `m2run` tool and how to check that a change leaves the output alone.
   the decompilation and portable C port this is built on.
 - **Toniisound**: Nintendo Switch port.
 - Third-party code: Musashi 68000 core (MIT), ymfm (BSD-3), Dear ImGui (MIT),
-  Roboto font (Apache 2.0), SDL2, devkitPro / libnx.
+  stb_image (public domain), SDL2, devkitPro / libnx. Logo set in Bungee Inline
+  by David Jonathan Ross (SIL Open Font License).
 
 Sega, Model 2, Daytona USA, Virtua Fighter and Sega Rally are trademarks of
 Sega. No ROMs are included or will be provided.

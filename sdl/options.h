@@ -33,6 +33,9 @@ typedef struct {
     int    hold_gears;
     int    coop;
     int    split_side;       /* --coop: 1 side by side, 0 one above the other */
+    int    show_fps;         /* frame rate drawn over the game */
+    int    volume;           /* sound volume, percent (0-200) */
+    int    only_installed;   /* game list: only the sets in the ROM folder */
 } m2_options;
 
 void m2opt_defaults(m2_options *o);

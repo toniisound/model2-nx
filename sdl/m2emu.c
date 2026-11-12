@@ -42,6 +42,9 @@
 #ifdef __SWITCH__
 #include "switch_sys.h"
 #endif
+#ifdef M2_NX_UI
+#include "launcher_nx.h"
+#endif
 
 #include <SDL2/SDL.h>
 #include <errno.h>
@@ -104,6 +107,8 @@ static void on_sound(void *u, uint8_t c) { player *p = u; if (p->snd) m2snd_comm
 /* The sound board runs here, on SDL's audio thread, at the device's pace:
    its tempo stays right even when the emulation can't keep full speed.
    With --coop only player 1's machine has one. */
+static int g_volume = 100;   /* percent, from the settings */
+
 static void audio_callback(void *u, Uint8 *stream, int len)
 {
 #ifdef __SWITCH__   /* the sound board (68000 + SCSP) gets a core of its own */
@@ -114,6 +119,13 @@ static void audio_callback(void *u, Uint8 *stream, int len)
     }
 #endif
     m2snd_render(u, (int16_t *)stream, len / 4);
+    if (g_volume != 100) {
+        int16_t *s = (int16_t *)stream;
+        for (int i = 0; i < len / 2; i++) {
+            int v = s[i] * g_volume / 100;
+            s[i] = (int16_t)(v > 32767 ? 32767 : v < -32768 ? -32768 : v);
+        }
+    }
 }
 
 /* The board runs on its own thread, one frame ahead of the renderer: while
@@ -256,8 +268,13 @@ static int run_game(SDL_Window *win, const m2_options *o, const char *game_name,
     const m2_game *game = m2_find_game(game_name);
     if (!game) FAIL("Unknown game %s", game_name);
     const char *dirs[] = { romdir, NULL };
+#ifdef M2_NX_UI   /* linked play is a setting in the menu: only Daytona USA uses it */
+    if (coop && strncmp(game->name, "daytona", 7))
+        coop = 0;
+#endif
     if (coop && strncmp(game->name, "daytona", 7))
         FAIL("Linked play (--coop): only Daytona USA for now");
+    g_volume = o->volume;
     nplayers = coop ? 2 : 1;
     if (coop && !split_side && !wide_set)   /* one above the other: wide views fill each half */
         wide_on = wide_fill = 1;
@@ -396,6 +413,10 @@ static int run_game(SDL_Window *win, const m2_options *o, const char *game_name,
     const double freq = (double)SDL_GetPerformanceFrequency();
     double next = SDL_GetPerformanceCounter() / freq;
     int running = 1, paused = 0, fast = 0, frames = 0;
+    float last_fps = 0;
+#ifdef M2_NX_UI
+    int paused_before_menu = 0, stick_dir = 0;
+#endif
     double fps_t = next, bench_t0 = next;
 
     while (running) {
@@ -464,6 +485,13 @@ static int run_game(SDL_Window *win, const m2_options *o, const char *game_name,
             case SDL_CONTROLLERBUTTONUP:
                 for (int p = 0; p < 2; p++)
                     if (pads[p] && SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(pads[p])) == e.cbutton.which) {
+#ifdef M2_NX_UI   /* the pause menu takes the buttons while it is open */
+                        if (m2nx_menu_is_open()) {
+                            if (e.type == SDL_CONTROLLERBUTTONDOWN)
+                                m2nx_menu_button(e.cbutton.button);
+                            continue;
+                        }
+#endif
                         int k = pad_button_from_sdl(e.cbutton.button);
                         if (k >= 0) raw.pad[p][k] = e.type == SDL_CONTROLLERBUTTONDOWN;
 #ifdef __SWITCH__   /* no keyboard: L3 / R3 are the cabinet's service / test buttons (F1 / F2) */
@@ -472,12 +500,17 @@ static int run_game(SDL_Window *win, const m2_options *o, const char *game_name,
                         if (e.cbutton.button == SDL_CONTROLLER_BUTTON_RIGHTSTICK)
                             raw.key[0x3c] = e.type == SDL_CONTROLLERBUTTONDOWN;
 #endif
-#ifdef __SWITCH__   /* - and + together: back to the launcher (the Switch's Esc) */
+#ifdef M2_NX_UI   /* - and + together: the pause menu (the emulation stops meanwhile) */
                         if (e.type == SDL_CONTROLLERBUTTONDOWN &&
                             SDL_GameControllerGetButton(pads[p], SDL_CONTROLLER_BUTTON_BACK) &&
                             SDL_GameControllerGetButton(pads[p], SDL_CONTROLLER_BUTTON_START)) {
-                            running = 0;
-                            quit_app = !from_gui;
+                            paused_before_menu = paused;
+                            paused = 1;
+                            if (audio) SDL_PauseAudioDevice(audio, 1);
+                            memset(raw.pad, 0, sizeof raw.pad);
+                            memset(raw.axis, 0, sizeof raw.axis);
+                            raw.key[0x3b] = raw.key[0x3c] = 0;
+                            m2nx_menu_open();
                         }
 #endif
                     }
@@ -485,8 +518,21 @@ static int run_game(SDL_Window *win, const m2_options *o, const char *game_name,
             case SDL_CONTROLLERAXISMOTION:
                 for (int p = 0; p < 2; p++)
                     if (pads[p] && SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(pads[p])) == e.caxis.which &&
-                        e.caxis.axis < M2PAD_AXES)
+                        e.caxis.axis < M2PAD_AXES) {
+#ifdef M2_NX_UI   /* the left stick moves the pause menu's cursor too */
+                        if (m2nx_menu_is_open()) {
+                            if (e.caxis.axis == SDL_CONTROLLER_AXIS_LEFTY) {
+                                int dir = e.caxis.value < -16000 ? -1 : e.caxis.value > 16000 ? 1 : 0;
+                                if (dir && dir != stick_dir)
+                                    m2nx_menu_button(dir < 0 ? SDL_CONTROLLER_BUTTON_DPAD_UP
+                                                             : SDL_CONTROLLER_BUTTON_DPAD_DOWN);
+                                stick_dir = dir;
+                            }
+                            continue;
+                        }
+#endif
                         raw.axis[p][e.caxis.axis] = e.caxis.value;
+                    }
                 break;
             }
         }
@@ -508,6 +554,27 @@ static int run_game(SDL_Window *win, const m2_options *o, const char *game_name,
         }
         iter++;
 
+#ifdef M2_NX_UI
+        if (m2nx_menu_is_open()) {   /* chosen once the buttons are released */
+            int held = 0;
+            for (int p = 0; p < 2; p++)
+                for (int b = 0; pads[p] && b < SDL_CONTROLLER_BUTTON_MAX; b++)
+                    held |= SDL_GameControllerGetButton(pads[p], (SDL_GameControllerButton)b);
+            int action = m2nx_menu_take(held);
+            if (action == M2NX_EXIT) {
+                running = 0;
+                quit_app = !from_gui;
+            } else if (action != M2NX_NONE) {
+                if (action == M2NX_RESET) {
+                    want_reset = 1;
+                    m2nx_message("Game reset");
+                }
+                paused = paused_before_menu;
+                if (audio && !paused) SDL_PauseAudioDevice(audio, 0);
+                next = SDL_GetPerformanceCounter() / freq;   /* don't catch up the paused time */
+            }
+        }
+#endif
         /* collect the frame the board threads were running; from here until
            the next go, the boards are ours */
         Uint64 t0 = SDL_GetPerformanceCounter();
@@ -664,6 +731,9 @@ static int run_game(SDL_Window *win, const m2_options *o, const char *game_name,
             free(px);
             running = 0;
         }
+#ifdef M2_NX_UI
+        m2nx_overlay_draw(w, h, last_fps, o->show_fps);
+#endif
         SDL_GL_SwapWindow(win);
 
         /* pace to the game's refresh rate */
@@ -683,6 +753,7 @@ static int run_game(SDL_Window *win, const m2_options *o, const char *game_name,
                 else
                     snprintf(gear, sizeof gear, " - gear %c", pl[0].in.gear[0] ? '0' + pl[0].in.gear[0] : 'N');
             }
+            last_fps = (float)(frames / (now - fps_t));
             snprintf(title, sizeof title, "%s - Model 2%s - %.1f fps%s%s%s", game->title, coop ? " - linked" : "",
                      frames / (now - fps_t), gear, wide_on ? " - wide" : "", paused ? " (paused)" : "");
             SDL_SetWindowTitle(win, title);
@@ -719,6 +790,9 @@ static int run_game(SDL_Window *win, const m2_options *o, const char *game_name,
         if (pads[p])
             SDL_GameControllerClose(pads[p]);
     memset(pl, 0, sizeof pl);
+#ifdef M2_NX_UI
+    m2nx_overlay_shutdown();
+#endif
     return quit_app;
 
 fail:

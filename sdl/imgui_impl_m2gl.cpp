@@ -181,6 +181,23 @@ void ImGui_ImplM2GL_RenderDrawData(ImDrawData *dd)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
+void ImGui_ImplM2GL_InitContext()
+{
+    ImGuiIO &io = ImGui::GetIO();
+    io.BackendRendererName = "imgui_impl_m2gl";
+    io.BackendFlags |= ImGuiBackendFlags_RendererHasTextures;
+}
+
+void ImGui_ImplM2GL_ShutdownContext()
+{
+    for (ImTextureData *tex : ImGui::GetPlatformIO().Textures)
+        if (tex->RefCount == 1 && tex->Status != ImTextureStatus_Destroyed)
+            destroy_texture(tex);
+    ImGuiIO &io = ImGui::GetIO();
+    io.BackendRendererName = NULL;
+    io.BackendFlags &= ~ImGuiBackendFlags_RendererHasTextures;
+}
+
 void ImGui_ImplM2GL_Shutdown()
 {
     for (ImTextureData *tex : ImGui::GetPlatformIO().Textures)

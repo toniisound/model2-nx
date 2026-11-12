@@ -23,7 +23,7 @@ TARGET   := Model2-NX
 
 PORTLIBS_SW := $(DEVKITPRO)/portlibs/switch
 ARCH     := -march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
-DEFS     := -D__SWITCH__ -D_DEFAULT_SOURCE -DIMGUI_DISABLE_DEFAULT_SHELL_FUNCTIONS
+DEFS     := -D__SWITCH__ -D_DEFAULT_SOURCE -DIMGUI_DISABLE_DEFAULT_SHELL_FUNCTIONS -DM2_NX_UI
 INCS     := -I$(DEVKITPRO)/libnx/include -I$(PORTLIBS_SW)/include -I$(PORTLIBS_SW)/include/SDL2 -Iimgui
 
 OPT      := -O2 -g -ffunction-sections
@@ -38,7 +38,7 @@ CORE_C   := i960/i960.c tgp/tgp.c m2/m2board.c m2/m2rom.c m2/m2tile.c m2/m2input
             m68k/m68kcpu.c m68k/m68kops.c m68k/softfloat/softfloat.c \
             sdl/m2emu.c sdl/options.c sdl/dirlist.c sdl/switch_sys.c m2/m2gl.c m2/m2glapi.c
 CORE_CXX := snd/ym3438.cpp ymfm/ymfm_opn.cpp ymfm/ymfm_adpcm.cpp ymfm/ymfm_ssg.cpp \
-            sdl/launcher.cpp sdl/imgui_impl_m2gl.cpp \
+            sdl/launcher_nx.cpp sdl/imgui_impl_m2gl.cpp \
             imgui/imgui.cpp imgui/imgui_draw.cpp imgui/imgui_tables.cpp imgui/imgui_widgets.cpp \
             imgui/backends/imgui_impl_sdl2.cpp
 
@@ -46,8 +46,13 @@ OBJS := $(addprefix $(BUILD)/,$(CORE_C:.c=.o) $(CORE_CXX:.cpp=.o))
 
 all: $(TARGET).nro
 
-$(TARGET).nro: $(BUILD)/$(TARGET).elf $(BUILD)/$(TARGET).nacp $(ICON)
-	elf2nro $< $@ --icon=$(ICON) --nacp=$(BUILD)/$(TARGET).nacp
+# RomFS inside the .nro: the menu's logo
+ROMFS := $(BUILD)/romfs
+
+$(TARGET).nro: $(BUILD)/$(TARGET).elf $(BUILD)/$(TARGET).nacp $(ICON) Assets/logo.bmp
+	@mkdir -p $(ROMFS)/Assets
+	cp Assets/logo.bmp $(ROMFS)/Assets/
+	elf2nro $< $@ --icon=$(ICON) --nacp=$(BUILD)/$(TARGET).nacp --romfsdir=$(ROMFS)
 
 $(BUILD)/$(TARGET).nacp:
 	@mkdir -p $(BUILD)

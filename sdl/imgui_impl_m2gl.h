@@ -9,5 +9,9 @@ struct ImDrawData;
 bool ImGui_ImplM2GL_Init(bool es);
 void ImGui_ImplM2GL_Shutdown();
 void ImGui_ImplM2GL_RenderDrawData(ImDrawData *draw_data);
+/* A second ImGui context drawn with the same renderer (Init done once on the
+   first): marks the current context as rendered by it / frees its textures. */
+void ImGui_ImplM2GL_InitContext();
+void ImGui_ImplM2GL_ShutdownContext();
 
 #endif

@@ -50,7 +50,14 @@ all: $(BUILD)/m2emu$(EXE) $(BUILD)/m2run$(EXE)
 # the launcher: Dear ImGui (port/imgui, MIT) on SDL2 and our GL layer
 IMGUI_CXX := imgui/imgui.cpp imgui/imgui_draw.cpp imgui/imgui_tables.cpp imgui/imgui_widgets.cpp \
              imgui/backends/imgui_impl_sdl2.cpp
-GUI_OBJ = $(addprefix $(BUILD)/,sdl/launcher.o sdl/imgui_impl_m2gl.o $(IMGUI_CXX:.cpp=.o) \
+# NX_UI=1: the Switch build's menus (Model2-NX, SuperModel NX's layout) instead of the launcher
+ifeq ($(NX_UI),1)
+LAUNCHER := sdl/launcher_nx.o
+CFLAGS   += -DM2_NX_UI
+else
+LAUNCHER := sdl/launcher.o
+endif
+GUI_OBJ = $(addprefix $(BUILD)/,$(LAUNCHER) sdl/imgui_impl_m2gl.o $(IMGUI_CXX:.cpp=.o) \
             sdl/options.o sdl/dirlist.o)
 
 $(BUILD)/m2emu$(EXE): $(BUILD)/sdl/m2emu.o $(BUILD)/m2/m2gl.o $(BUILD)/m2/m2glapi.o $(GUI_OBJ) $(OBJ)

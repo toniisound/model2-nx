@@ -36,6 +36,8 @@ void m2opt_defaults(m2_options *o)
     o->saturation = 1.0f;
     o->gamma[0] = o->gamma[1] = o->gamma[2] = 1.0f;
     o->split_side = 1;
+    o->volume = 100;
+    o->only_installed = 1;
 }
 
 static int set_wide(m2_options *o, const char *v)
@@ -215,11 +217,16 @@ int m2opt_load(m2_options *o, const char *path, char *last_game, int last_game_s
         else if (!strcmp(k, "hold_gears")) o->hold_gears = atoi(v) != 0;
         else if (!strcmp(k, "linked_play")) o->coop = atoi(v) != 0;
         else if (!strcmp(k, "split")) o->split_side = strcmp(v, "stack") != 0;
+        else if (!strcmp(k, "show_fps")) o->show_fps = atoi(v) != 0;
+        else if (!strcmp(k, "volume")) o->volume = atoi(v);
+        else if (!strcmp(k, "only_installed")) o->only_installed = atoi(v) != 0;
         else if (!strcmp(k, "last_game") && last_game) snprintf(last_game, (size_t)last_game_size, "%s", v);
     }
     fclose(f);
     if (o->scale < 0 || o->scale > 8) o->scale = 0;
     if (o->saturation <= 0) o->saturation = 1.0f;
+    if (o->volume < 0) o->volume = 0;
+    if (o->volume > 200) o->volume = 200;
     return 0;
 }
 
@@ -270,6 +277,9 @@ int m2opt_save(const m2_options *o, const char *path, const char *last_game)
     fprintf(f, "hold_gears = %d\n", o->hold_gears);
     fprintf(f, "linked_play = %d\n", o->coop);
     fprintf(f, "split = %s\n", o->split_side ? "side" : "stack");
+    fprintf(f, "show_fps = %d\n", o->show_fps);
+    fprintf(f, "volume = %d\n", o->volume);
+    fprintf(f, "only_installed = %d\n", o->only_installed);
     fprintf(f, "last_game = %s\n", last_game ? last_game : "");
     return fclose(f) ? -1 : 0;
 }
