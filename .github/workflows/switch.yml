@@ -1,0 +1,19 @@
+name: Switch build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  switch:
+    runs-on: ubuntu-latest
+    container: devkitpro/devkita64:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Model2EmuEx.nro
+        run: make -f Makefile.switch -j$(nproc)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Model2EmuEx-switch
+          path: Model2EmuEx.nro

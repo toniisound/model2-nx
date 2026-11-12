@@ -1,0 +1,82 @@
+# Model2EmuEx for Nintendo Switch: builds Model2EmuEx.nro with devkitA64.
+#
+#   make -f Makefile.switch            (needs devkitPro with switch-sdl2, switch-zlib, switch-mesa)
+#   docker run --rm -v "$PWD":/src -w /src devkitpro/devkita64 make -f Makefile.switch
+#
+# The core (i960, TGP, sound, 3D) is the same code as the desktop build; only
+# the frontend differs where __SWITCH__ is defined (paths on the SD card,
+# 1280x720 fullscreen, Joy-Con controls, CPU boost while a game runs).
+
+ifeq ($(strip $(DEVKITPRO)),)
+$(error "Set DEVKITPRO in your environment: export DEVKITPRO=<path to>/devkitpro")
+endif
+
+include $(DEVKITPRO)/libnx/switch_rules
+
+APP_TITLE   := Model2EmuEx
+APP_AUTHOR  := Toniisound
+APP_VERSION := 1.0
+ICON        := switch/icon.jpg
+
+BUILD    := build-switch
+TARGET   := Model2EmuEx
+
+PORTLIBS_SW := $(DEVKITPRO)/portlibs/switch
+ARCH     := -march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
+DEFS     := -D__SWITCH__ -D_DEFAULT_SOURCE -DIMGUI_DISABLE_DEFAULT_SHELL_FUNCTIONS
+INCS     := -I$(DEVKITPRO)/libnx/include -I$(PORTLIBS_SW)/include -I$(PORTLIBS_SW)/include/SDL2 -Iimgui
+
+OPT      := -O2 -g -ffunction-sections
+CFLAGS   := $(OPT) $(ARCH) $(DEFS) $(INCS) -std=gnu11 -Wall -MMD -MP
+CXXFLAGS := $(OPT) $(ARCH) $(DEFS) $(INCS) -std=gnu++14 -fno-rtti -Wall -MMD -MP
+LDFLAGS  := -specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(BUILD)/$(TARGET).map
+LIBS     := -L$(PORTLIBS_SW)/lib -L$(DEVKITPRO)/libnx/lib \
+            -lSDL2 -lEGL -lglapi -ldrm_nouveau -lz -lstdc++ -lm -lnx
+
+CORE_C   := i960/i960.c tgp/tgp.c m2/m2board.c m2/m2rom.c m2/m2tile.c m2/m2input.c m2/m2geo.c m2/m2wide.c \
+            m2/m2pipe.c m2/m2net.c snd/m2snd.c snd/scsp.c snd/multipcm.c \
+            m68k/m68kcpu.c m68k/m68kops.c m68k/softfloat/softfloat.c \
+            sdl/m2emu.c sdl/options.c sdl/dirlist.c sdl/switch_sys.c m2/m2gl.c m2/m2glapi.c
+CORE_CXX := snd/ym3438.cpp ymfm/ymfm_opn.cpp ymfm/ymfm_adpcm.cpp ymfm/ymfm_ssg.cpp \
+            sdl/launcher.cpp sdl/imgui_impl_m2gl.cpp \
+            imgui/imgui.cpp imgui/imgui_draw.cpp imgui/imgui_tables.cpp imgui/imgui_widgets.cpp \
+            imgui/backends/imgui_impl_sdl2.cpp
+
+OBJS := $(addprefix $(BUILD)/,$(CORE_C:.c=.o) $(CORE_CXX:.cpp=.o))
+
+all: $(TARGET).nro
+
+$(TARGET).nro: $(BUILD)/$(TARGET).elf $(BUILD)/$(TARGET).nacp $(ICON)
+	elf2nro $< $@ --icon=$(ICON) --nacp=$(BUILD)/$(TARGET).nacp
+
+$(BUILD)/$(TARGET).nacp:
+	@mkdir -p $(BUILD)
+	nacptool --create "$(APP_TITLE)" "$(APP_AUTHOR)" "$(APP_VERSION)" $@
+
+$(BUILD)/$(TARGET).elf: $(OBJS)
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS)
+
+# third-party code (Musashi, ymfm, Dear ImGui): their warnings are not ours
+$(BUILD)/m68k/%.o: m68k/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -w -c -o $@ $<
+$(BUILD)/ymfm/%.o: ymfm/%.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -w -c -o $@ $<
+$(BUILD)/imgui/%.o: imgui/%.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -w -c -o $@ $<
+
+$(BUILD)/%.o: %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c -o $@ $<
+$(BUILD)/%.o: %.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+clean:
+	rm -rf $(BUILD) $(TARGET).nro
+
+-include $(shell find $(BUILD) -name '*.d' 2>/dev/null)
+
+.PHONY: all clean
