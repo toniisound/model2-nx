@@ -322,12 +322,23 @@ static std::vector<const game_entry *> shown_games(const m2_options *o)
     return v;
 }
 
+/* row the pad cursor is on; the cursor never leaves the rows (no focus on
+   the list's window itself): when no row has it, it goes back to this one */
+static int g_cursor_row = -1;
+static bool g_refocus;
+
 static void draw_game_list(const std::vector<const game_entry *> &games, int &selected, bool &chosen, bool focus)
 {
     /* the list on the left, the cover of the game under the cursor on the right */
     const float cover_w = std::floor(ImGui::GetContentRegionAvail().x * 0.30f);
     const float list_w = ImGui::GetContentRegionAvail().x - cover_w - ImGui::GetStyle().ItemSpacing.x;
-    ImGui::BeginChild("TableRegion", ImVec2(list_w, 0.0f), true);
+    ImGui::BeginChild("TableRegion", ImVec2(list_w, 0.0f), ImGuiChildFlags_Borders | ImGuiChildFlags_NavFlattened);
+    if (focus)
+        g_cursor_row = selected >= 0 ? selected : 0;
+    if (g_cursor_row >= (int)games.size())
+        g_cursor_row = (int)games.size() - 1;
+    const bool put_cursor = focus || g_refocus;
+    bool any_focused = false;
     ImGui::PushFont(NULL, ImGui::GetStyle().FontSizeBase * 0.85f);   /* a bit smaller, so the columns fit */
 
     const ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit |
@@ -355,11 +366,15 @@ static void draw_game_list(const std::vector<const game_entry *> &games, int &se
             else
                 ImGui::Text("%s", g.title.c_str());
             ImGui::TableSetColumnIndex(1);
-            if (focus && (row == selected || (selected < 0 && row == 0)))
+            if (put_cursor && row == g_cursor_row)
                 ImGui::SetKeyboardFocusHere();   /* the pad cursor on the selected game */
             if (ImGui::Selectable(g.name.c_str(), selected == row, ImGuiSelectableFlags_SpanAllColumns)) {
                 chosen = true;   /* A starts the game straight away */
                 selected = row;
+            }
+            if (ImGui::IsItemFocused()) {
+                g_cursor_row = row;
+                any_focused = true;
             }
             if (ImGui::IsItemFocused() || ImGui::IsItemHovered() ||
                 (g_cover_game.empty() && row == std::max(selected, 0))) {
@@ -375,6 +390,8 @@ static void draw_game_list(const std::vector<const game_entry *> &games, int &se
     }
     ImGui::PopFont();
     ImGui::EndChild();
+    /* the cursor left the rows (B, or past the ends): put it back next frame */
+    g_refocus = !any_focused && !games.empty() && !ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId);
     ImGui::SameLine();
     draw_cover_panel(ImVec2(cover_w, 0.0f));
 }
