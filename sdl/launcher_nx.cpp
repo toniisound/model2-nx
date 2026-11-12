@@ -408,7 +408,6 @@ static void draw_credits()
     ImGui::BulletText("ymfm by Aaron Giles");
     ImGui::BulletText("zlib");
     ImGui::BulletText("stb_image by Sean Barrett (game covers)");
-    ImGui::BulletText("Logo set in Bungee Inline by David Jonathan Ross (SIL Open Font License)");
 
     ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
     ImGui::TextWrapped("Free software, with no warranty.");

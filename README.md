@@ -131,8 +131,7 @@ headless `m2run` tool and how to check that a change leaves the output alone.
   the decompilation and portable C port this is built on.
 - **Toniisound**: Nintendo Switch port.
 - Third-party code: Musashi 68000 core (MIT), ymfm (BSD-3), Dear ImGui (MIT),
-  stb_image (public domain), SDL2, devkitPro / libnx. Logo set in Bungee Inline
-  by David Jonathan Ross (SIL Open Font License).
+  stb_image (public domain), SDL2, devkitPro / libnx.
 
 Sega, Model 2, Daytona USA, Virtua Fighter and Sega Rally are trademarks of
 Sega. No ROMs are included or will be provided.
