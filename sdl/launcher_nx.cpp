@@ -286,7 +286,7 @@ static void draw_header(bool &toggle_settings)
 {
     if (!g_logo_tried)
         load_logo();
-    const float header_h = 190.0f;
+    const float header_h = 150.0f;
     ImGui::BeginChild("Header", ImVec2(0.0f, header_h), false,
                       ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoNav);
     const float avail = ImGui::GetContentRegionAvail().x;
