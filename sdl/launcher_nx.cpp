@@ -251,8 +251,10 @@ static void free_covers()
 
 static void draw_cover_panel(const ImVec2 &size)
 {
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));   /* the cover fills the panel */
     ImGui::BeginChild("Cover", size, true,
                       ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoNav);
+    ImGui::PopStyleVar();
     const ImVec2 avail = ImGui::GetContentRegionAvail();
     const picture *c = NULL;
     if (!g_cover_game.empty()) {
@@ -260,12 +262,21 @@ static void draw_cover_panel(const ImVec2 &size)
         if (!c->tex && !g_cover_parent.empty())
             c = &get_cover(g_cover_parent);
     }
-    if (c && c->tex) {   /* fitted, in proportion, centred */
-        float w = avail.x, h = w * float(c->h) / float(c->w);
-        if (h > avail.y) { h = avail.y; w = h * float(c->w) / float(c->h); }
-        ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX() + (avail.x - w) * 0.5f,
-                                   ImGui::GetCursorPosY() + (avail.y - h) * 0.5f));
-        ImGui::Image((ImTextureID)(intptr_t)c->tex, ImVec2(w, h));
+    if (c && c->tex && avail.x > 0 && avail.y > 0) {
+        /* the whole panel, in proportion: what doesn't fit is cut evenly
+           from both sides (or from top and bottom) */
+        const float pic = float(c->w) / float(c->h), panel = avail.x / avail.y;
+        ImVec2 uv0(0.0f, 0.0f), uv1(1.0f, 1.0f);
+        if (pic > panel) {
+            const float keep = panel / pic;
+            uv0.x = (1.0f - keep) * 0.5f;
+            uv1.x = 1.0f - uv0.x;
+        } else {
+            const float keep = pic / panel;
+            uv0.y = (1.0f - keep) * 0.5f;
+            uv1.y = 1.0f - uv0.y;
+        }
+        ImGui::Image((ImTextureID)(intptr_t)c->tex, avail, uv0, uv1);
     } else if (!g_cover_game.empty()) {
         const char *text = "No cover";
         const std::string hint = "Covers/" + g_cover_game + ".png";
@@ -330,7 +341,10 @@ static bool g_refocus;
 static void draw_game_list(const std::vector<const game_entry *> &games, int &selected, bool &chosen, bool focus)
 {
     /* the list on the left, the cover of the game under the cursor on the right */
-    const float cover_w = std::floor(ImGui::GetContentRegionAvail().x * 0.30f);
+    /* the cover panel takes a box cover's shape (about 4:5) at the list's full
+       height, so a cover fills it whole; at most 40% of the width */
+    const float cover_w = std::floor(std::min(ImGui::GetContentRegionAvail().x * 0.40f,
+                                              ImGui::GetContentRegionAvail().y * 0.7926f));
     const float list_w = ImGui::GetContentRegionAvail().x - cover_w - ImGui::GetStyle().ItemSpacing.x;
     ImGui::BeginChild("TableRegion", ImVec2(list_w, 0.0f), ImGuiChildFlags_Borders | ImGuiChildFlags_NavFlattened);
     if (g_cursor_row < 0)
