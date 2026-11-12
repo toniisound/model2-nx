@@ -830,9 +830,14 @@ void m2nx_menu_button(int b)
         s_selected = (s_selected + k_item_count - 1) % k_item_count;
     else if (b == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
         s_selected = (s_selected + 1) % k_item_count;
-    else if (b == SDL_CONTROLLER_BUTTON_A)
+#ifdef __SWITCH__   /* SDL's Switch buttons follow the Xbox positions: the A button is SDL's B */
+    const int select = SDL_CONTROLLER_BUTTON_B, back = SDL_CONTROLLER_BUTTON_A;
+#else
+    const int select = SDL_CONTROLLER_BUTTON_A, back = SDL_CONTROLLER_BUTTON_B;
+#endif
+    if (b == select)
         s_pending = k_items[s_selected].action;
-    else if (b == SDL_CONTROLLER_BUTTON_B)
+    else if (b == back)
         s_pending = M2NX_CANCEL;
 }
 
