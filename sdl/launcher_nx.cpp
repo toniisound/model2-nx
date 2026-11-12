@@ -333,8 +333,8 @@ static void draw_game_list(const std::vector<const game_entry *> &games, int &se
     const float cover_w = std::floor(ImGui::GetContentRegionAvail().x * 0.30f);
     const float list_w = ImGui::GetContentRegionAvail().x - cover_w - ImGui::GetStyle().ItemSpacing.x;
     ImGui::BeginChild("TableRegion", ImVec2(list_w, 0.0f), ImGuiChildFlags_Borders | ImGuiChildFlags_NavFlattened);
-    if (focus)
-        g_cursor_row = selected >= 0 ? selected : 0;
+    if (g_cursor_row < 0)
+        g_cursor_row = 0;
     if (g_cursor_row >= (int)games.size())
         g_cursor_row = (int)games.size() - 1;
     const bool put_cursor = focus || g_refocus;
@@ -597,9 +597,8 @@ int m2launch_run(SDL_Window *win, m2_options *o, const char *cfg_path, char *gam
     focus_pending = true;
     std::vector<const game_entry *> games = shown_games(o);
     int selected = -1;
-    for (int i = 0; i < (int)games.size(); i++)
-        if (games[i]->name == game)
-            selected = i;
+    g_cursor_row = 0;   /* the cursor starts on the first game of the list */
+    g_cover_game.clear();
 
     std::string popup_msg = message ? message : "";
     bool popup_start = !popup_msg.empty();
