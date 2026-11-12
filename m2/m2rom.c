@@ -84,7 +84,7 @@ static void zip_close(zipf *z)
 static long zip_find(const zipf *z, const char *name, uint32_t crc)
 {
     uint32_t pos = 0;
-    long by_crc = -1;
+    long by_crc = -1, by_name = -1;
     for (uint32_t e = 0; e < z->entries && pos + 46 <= z->cd_size; e++) {
         const uint8_t *c = z->cd + pos;
         uint16_t nl = rd16(c + 28), xl = rd16(c + 30), cl = rd16(c + 32);
@@ -94,13 +94,20 @@ static long zip_find(const zipf *z, const char *name, uint32_t crc)
         fn[k] = 0;
         const char *base = strrchr(fn, '/');
         base = base ? base + 1 : fn;
-        if (!strcasecmp(base, name))
-            return (long)pos;
+        /* the right name with the right CRC; otherwise the CRC under any
+           name (sets from other MAME versions rename files), and only then
+           the name alone (wrong dump: the CRC check rejects it) */
+        if (!strcasecmp(base, name)) {
+            if (!crc || rd32(c + 16) == crc)
+                return (long)pos;
+            if (by_name < 0)
+                by_name = (long)pos;
+        }
         if (by_crc < 0 && crc && rd32(c + 16) == crc)
             by_crc = (long)pos;
         pos += 46u + nl + xl + cl;
     }
-    return by_crc;
+    return by_crc >= 0 ? by_crc : by_name;
 }
 
 static int zip_read(zipf *z, long cdpos, uint8_t *dst, uint32_t size)
@@ -264,6 +271,20 @@ int m2_check_roms(const m2_game *g, const char *const *dirs, int *total)
         }
     if (total)
         *total = n;
+    return missing;
+}
+
+int m2_missing_roms(const m2_game *g, const char *const *dirs, char *out, int size)
+{
+    int missing = 0, len = 0;
+    if (size > 0) out[0] = 0;
+    for (const m2_rom_entry *e = g->roms; e->type >= 0; e++)
+        if (e->type == 1 && find_file(g, dirs, e->file, e->crc, e->size, NULL)) {
+            missing++;
+            if (len >= 0 && len < size)
+                len += snprintf(out + len, (size_t)(size - len), "%s%s  (%u bytes, CRC %08X)",
+                                missing > 1 ? "\n" : "", e->file, e->size, e->crc);
+        }
     return missing;
 }
 

@@ -23,6 +23,7 @@
 struct game_row {
     const m2_game *g;
     int missing, total;
+    std::string missing_list;   /* their names, sizes and CRCs, one per line */
 };
 
 static bool g_ready;
@@ -104,8 +105,13 @@ static void scan(const char *dir)
     for (int i = 0; i < n; i++)
         for (const std::string &z : zips)
             if (iequal(z.c_str(), list[i].name)) {
-                game_row r = { &list[i], 0, 0 };
+                game_row r = { &list[i], 0, 0, std::string() };
                 r.missing = m2_check_roms(&list[i], dirs, &r.total);
+                if (r.missing) {
+                    char buf[2048];
+                    m2_missing_roms(&list[i], dirs, buf, sizeof buf);
+                    r.missing_list = buf;
+                }
                 g_rows.push_back(r);
                 break;
             }
@@ -348,13 +354,22 @@ static bool games_tab(m2_options *o, char *game, int game_size, bool *changed)
                 ImGui::SetTooltip("Two Daytona USA machines linked like two cabinets: each player drives their own\n"
                                   "car and sees the other. Player 1: keyboard and pad 1; player 2: pad 2.");
         }
-        if (sel->missing)
+        if (sel->missing) {
             ImGui::TextColored(k_bad, "Can't start: %d of its %d ROM files aren't in this folder (or in model2.zip / "
                                       "the parent set).", sel->missing, sel->total);
+            ImGui::TextColored(k_dim, "Missing:");
+            ImGui::Indent();
+            ImGui::TextColored(k_warn, "%s", sel->missing_list.c_str());
+            ImGui::Unindent();
+        }
         else if (!known_to_work(sel->g->name))
             ImGui::TextColored(k_warn, "Not tested with this emulator yet: it may not run correctly.");
         else
+#ifdef __SWITCH__
+            ImGui::TextColored(k_dim, "In game: - and + together back here, L3 service, R3 test.");
+#else
             ImGui::TextColored(k_dim, "In game: Esc back here, F3 reset, P pause, Tab fast forward, F11 fullscreen.");
+#endif
     } else {
         ImGui::TextColored(k_dim, "Choose a game.");
         ImGui::NewLine();
