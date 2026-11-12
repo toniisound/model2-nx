@@ -22,6 +22,16 @@
 #include <string.h>
 
 #define STICK 16000   /* digital threshold */
+
+/* Nintendo Switch (Model2-NX): driving games use the face buttons as pedals
+   (A accelerate, B brake; ZR / ZL still work) and the d-pad for the view
+   buttons. SDL names the Switch's buttons by the Xbox positions, so the A
+   button is M2PAD_B and the B button M2PAD_A. */
+#ifdef __SWITCH__
+#define NX_PEDALS 1
+#define PAD_ACCEL M2PAD_B
+#define PAD_BRAKE M2PAD_A
+#endif
 #define FN_DAYTONA 0x4c9080
 #define FN_SRALLY  0x4cb870
 
@@ -90,9 +100,15 @@ static int pad_digital(const m2_input_state *s, int p, const char *what)
         int k = what[7] - '1';
         return k >= 0 && k < 4 && b[map[k]];
     }
+#ifdef NX_PEDALS   /* view buttons on the d-pad: up VR 1, right VR 2, down VR 3, left VR 4 */
+    if (!strcmp(what, "VR")) return b[M2PAD_UP] || b[M2PAD_DOWN] || b[M2PAD_LEFT] || b[M2PAD_RIGHT];
+    if (!strncmp(what, "VR ", 3)) {
+        static const int map[4] = { M2PAD_UP, M2PAD_RIGHT, M2PAD_DOWN, M2PAD_LEFT };
+#else
     if (!strcmp(what, "VR")) return b[M2PAD_Y];
     if (!strncmp(what, "VR ", 3)) {
         static const int map[4] = { M2PAD_Y, M2PAD_B, M2PAD_X, M2PAD_A };
+#endif
         int k = what[3] - '1';
         return k >= 0 && k < 4 && b[map[k]];
     }
@@ -166,8 +182,13 @@ static void update_driving(m2_input_state *s, int steer_max)
 {
     const int16_t *ax = s->axis[0];
     const uint8_t *pb = s->pad[0];
+#ifdef NX_PEDALS   /* the d-pad is the view buttons; A / B are the pedals */
+    int left = s->key[0xcb], right = s->key[0xcd];
+    int up = s->key[0xc8] || pb[PAD_ACCEL], down = s->key[0xd0] || pb[PAD_BRAKE];
+#else
     int left = s->key[0xcb] || pb[M2PAD_LEFT], right = s->key[0xcd] || pb[M2PAD_RIGHT];
     int up = s->key[0xc8], down = s->key[0xd0];
+#endif
     float st = stick(ax[M2PAD_LX]);
 
     if (st != 0) {
@@ -243,8 +264,14 @@ void m2input_apply(m2_input_state *s, m2_board *b)
                 v = (st != 0 ? st : s->steer) * 0.5f + 0.5f;
             } else if (!strcmp(what, "Accelerate") || !strcmp(what, "Accelerator") || !strcmp(what, "Throttle")) {
                 v = s->key[0xc8] ? 1.0f : trigger(ax[M2PAD_RT]);
+#ifdef NX_PEDALS
+                if (s->pad[p][PAD_ACCEL]) v = 1.0f;
+#endif
             } else if (!strcmp(what, "Brake")) {
                 v = s->key[0xd0] ? 1.0f : trigger(ax[M2PAD_LT]);
+#ifdef NX_PEDALS
+                if (s->pad[p][PAD_BRAKE]) v = 1.0f;
+#endif
             } else if (!strcmp(what, "Vertical")) {
                 v = stick(ax[M2PAD_LY]) * 0.5f + 0.5f;
             } else {

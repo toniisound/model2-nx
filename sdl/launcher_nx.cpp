@@ -286,13 +286,13 @@ static void draw_header(bool &toggle_settings)
 {
     if (!g_logo_tried)
         load_logo();
-    const float header_h = 130.0f;
+    const float header_h = 190.0f;
     ImGui::BeginChild("Header", ImVec2(0.0f, header_h), false,
                       ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoNav);
     const float avail = ImGui::GetContentRegionAvail().x;
     if (g_logo.tex) {
         const float max_w = avail * 0.9f;
-        float h = header_h - 10.0f, w = h * float(g_logo.w) / float(g_logo.h);
+        float h = header_h - 4.0f, w = h * float(g_logo.w) / float(g_logo.h);
         if (w > max_w) { w = max_w; h = w * float(g_logo.h) / float(g_logo.w); }
         ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX() + (avail - w) * 0.5f, (header_h - h) * 0.5f));
         ImGui::Image((ImTextureID)(intptr_t)g_logo.tex, ImVec2(w, h));
@@ -549,7 +549,7 @@ int m2launch_init(SDL_Window *win, SDL_GLContext ctx, int es)
     io.IniFilename = NULL;
     ImGui::StyleColorsDark();
     ImGuiStyle &style = ImGui::GetStyle();
-    style.FontScaleMain = 1.7f;   /* readable on a TV and on the handheld screen */
+    style.FontScaleMain = 1.9f;   /* readable on a TV and on the handheld screen */
     style.ScaleAllSizes(1.5f);
     if (!ImGui_ImplSDL2_InitForOpenGL(win, ctx) || !ImGui_ImplM2GL_Init(es != 0))
         return -1;
@@ -803,7 +803,7 @@ bool ensure_context()
     io.Fonts->AddFontDefaultVector();
     ImGui::StyleColorsDark();
     ImGuiStyle &style = ImGui::GetStyle();
-    style.FontScaleMain = 1.8f;
+    style.FontScaleMain = 2.0f;
     style.ScaleAllSizes(1.6f);
     style.WindowRounding = 8.0f;
     style.FrameRounding = 6.0f;

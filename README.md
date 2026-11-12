@@ -72,13 +72,14 @@ cover of its own shows its parent's. None are included.
 
 ## In game
 
-| Button | Daytona USA / Sega Rally | Virtua Fighter 2 |
+| Button | Driving games (Daytona USA, Sega Rally...) | Virtua Fighter 2 |
 |--------|--------------------------|------------------|
 | Left stick | steer | move |
-| D-pad | — | move |
-| ZR / ZL | accelerate / brake | — |
+| A / ZR | accelerate | — |
+| B / ZL | brake | — |
+| D-pad | view buttons: ↑ VR1, → VR2, ↓ VR3, ← VR4 (Sega Rally: any direction) | move |
 | R / L | gear up / down | — |
-| A B X Y | view buttons (Sega Rally: Y = view) | buttons 1–4 (guard, punch, kick) |
+| A B X Y | — (A and B are the pedals) | buttons 1–4 (guard, punch, kick) |
 | + | start | start |
 | − | coin | coin |
 | L3 / R3 (stick click) | service / test | service / test |
