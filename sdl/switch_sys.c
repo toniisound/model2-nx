@@ -10,9 +10,9 @@ void m2sw_init(void)
 {
     /* the app's folders on the SD card, so the user can see where ROMs go */
     mkdir("sdmc:/switch", 0755);
-    mkdir("sdmc:/switch/Model2EmuEx", 0755);
-    mkdir("sdmc:/switch/Model2EmuEx/roms", 0755);
-    mkdir("sdmc:/switch/Model2EmuEx/NVDATA", 0755);
+    mkdir("sdmc:/switch/Model2-NX", 0755);
+    mkdir("sdmc:/switch/Model2-NX/roms", 0755);
+    mkdir("sdmc:/switch/Model2-NX/NVDATA", 0755);
 }
 
 void m2sw_pin_thread(int core)

@@ -1,4 +1,4 @@
-# Model2EmuEx for Nintendo Switch
+# Model2-NX
 
 A Nintendo Switch homebrew port (`.nro`) of
 [Model2EmuEx](https://github.com/octavioCuatrochio/Model2EmuEx) by octavioCuatrochio:
@@ -22,9 +22,9 @@ Other Model 2 / 2A games in the list may boot but haven't been tried. Model 2B
 
 ## Installation
 
-1. Copy `Model2EmuEx.nro` to `sdmc:/switch/Model2EmuEx/` on the SD card.
+1. Copy `Model2-NX.nro` to `sdmc:/switch/Model2-NX/` on the SD card.
 2. Put the MAME-style ROM zips (`daytona.zip`, `vf2.zip`, `srallyc.zip`, and
-   `model2.zip` if your sets need it) in `sdmc:/switch/Model2EmuEx/roms/`.
+   `model2.zip` if your sets need it) in `sdmc:/switch/Model2-NX/roms/`.
 3. Launch it from the Homebrew Menu. Use title takeover (hold R while opening a
    game) rather than the album applet, so the emulator gets all the memory.
 
@@ -32,10 +32,10 @@ The folders are created on the first run if they're missing.
 
 | Path | Contents |
 |------|----------|
-| `sdmc:/switch/Model2EmuEx/roms/` | ROM zips |
-| `sdmc:/switch/Model2EmuEx/NVDATA/` | save data (`<game>.DAT`, same format as the PC emulator's) |
-| `sdmc:/switch/Model2EmuEx/m2emu.ini` | settings, written by the launcher |
-| `sdmc:/switch/Model2EmuEx/gamecontrollerdb.txt` | optional extra pad mappings |
+| `sdmc:/switch/Model2-NX/roms/` | ROM zips |
+| `sdmc:/switch/Model2-NX/NVDATA/` | save data (`<game>.DAT`, same format as the PC emulator's) |
+| `sdmc:/switch/Model2-NX/m2emu.ini` | settings, written by the launcher |
+| `sdmc:/switch/Model2-NX/gamecontrollerdb.txt` | optional extra pad mappings |
 
 ## Controls
 
@@ -95,7 +95,7 @@ Or with Docker, no local install needed:
 
     docker run --rm -v "$PWD":/src -w /src devkitpro/devkita64 make -f Makefile.switch
 
-This writes `Model2EmuEx.nro`. Every push is also built by GitHub Actions
+This writes `Model2-NX.nro`. Every push is also built by GitHub Actions
 (`.github/workflows/switch.yml`); the `.nro` is on the run's page under Artifacts.
 
 The desktop build (Linux / Windows) still works with the original `Makefile`.

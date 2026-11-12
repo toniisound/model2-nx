@@ -1,4 +1,4 @@
-# Model2EmuEx for Nintendo Switch: builds Model2EmuEx.nro with devkitA64.
+# Model2-NX for Nintendo Switch: builds Model2-NX.nro with devkitA64.
 #
 #   make -f Makefile.switch            (needs devkitPro with switch-sdl2, switch-zlib, switch-mesa)
 #   docker run --rm -v "$PWD":/src -w /src devkitpro/devkita64 make -f Makefile.switch
@@ -13,13 +13,13 @@ endif
 
 include $(DEVKITPRO)/libnx/switch_rules
 
-APP_TITLE   := Model2EmuEx
+APP_TITLE   := Model2-NX
 APP_AUTHOR  := Toniisound
 APP_VERSION := 1.0
 ICON        := switch/icon.jpg
 
 BUILD    := build-switch
-TARGET   := Model2EmuEx
+TARGET   := Model2-NX
 
 PORTLIBS_SW := $(DEVKITPRO)/portlibs/switch
 ARCH     := -march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE

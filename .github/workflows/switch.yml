@@ -11,9 +11,9 @@ jobs:
     container: devkitpro/devkita64:latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build Model2EmuEx.nro
+      - name: Build Model2-NX.nro
         run: make -f Makefile.switch -j$(nproc)
       - uses: actions/upload-artifact@v4
         with:
-          name: Model2EmuEx-switch
-          path: Model2EmuEx.nro
+          name: Model2-NX-switch
+          path: Model2-NX.nro

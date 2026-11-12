@@ -829,7 +829,7 @@ int main(int argc, char **argv)
     {
         char dbpath[1200];
 #ifdef __SWITCH__
-        snprintf(dbpath, sizeof dbpath, "%s", "sdmc:/switch/Model2EmuEx/gamecontrollerdb.txt");
+        snprintf(dbpath, sizeof dbpath, "%s", "sdmc:/switch/Model2-NX/gamecontrollerdb.txt");
 #else
         char *base = SDL_GetBasePath();
         snprintf(dbpath, sizeof dbpath, "%sgamecontrollerdb.txt", base ? base : "");

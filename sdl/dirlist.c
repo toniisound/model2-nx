@@ -58,7 +58,7 @@ int m2dir_exists(const char *path)
 void m2dir_home(char *out, int size)
 {
 #ifdef __SWITCH__
-    snprintf(out, (size_t)size, "%s", "sdmc:/switch/Model2EmuEx");
+    snprintf(out, (size_t)size, "%s", "sdmc:/switch/Model2-NX");
     return;
 #endif
     const char *h = getenv("HOME");

@@ -15,7 +15,7 @@
 #endif
 
 #ifdef __SWITCH__   /* everything lives in the app's folder on the SD card */
-#define SWITCH_DIR "sdmc:/switch/Model2EmuEx"
+#define SWITCH_DIR "sdmc:/switch/Model2-NX"
 #endif
 
 void m2opt_defaults(m2_options *o)

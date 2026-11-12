@@ -633,7 +633,7 @@ int m2launch_run(SDL_Window *win, m2_options *o, const char *cfg_path, char *gam
                  const char *message)
 {
     char title[64];
-    snprintf(title, sizeof title, "Model2EmuEx");
+    snprintf(title, sizeof title, "Model2-NX");
     SDL_SetWindowTitle(win, title);
     SDL_GL_SetSwapInterval(1);
 
@@ -676,7 +676,7 @@ int m2launch_run(SDL_Window *win, m2_options *o, const char *cfg_path, char *gam
         ImGui::SetNextWindowSize(vp->WorkSize);
         ImGui::Begin("launcher", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
                                            ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoSavedSettings);
-        ImGui::TextUnformatted("Model2EmuEx");
+        ImGui::TextUnformatted("Model2-NX");
         ImGui::SameLine();
 #ifdef __SWITCH__
         ImGui::TextColored(k_dim, "  Sega Model 2 for Switch  -  A: choose   B: back   +: exit");
