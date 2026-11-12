@@ -327,15 +327,16 @@ static void draw_game_list(const std::vector<const game_entry *> &games, int &se
     /* the list on the left, the cover of the game under the cursor on the right */
     const float cover_w = std::floor(ImGui::GetContentRegionAvail().x * 0.30f);
     const float list_w = ImGui::GetContentRegionAvail().x - cover_w - ImGui::GetStyle().ItemSpacing.x;
-    ImGui::BeginChild("TableRegion", ImVec2(list_w, 0.0f), true, ImGuiWindowFlags_HorizontalScrollbar);
+    ImGui::BeginChild("TableRegion", ImVec2(list_w, 0.0f), true);
     ImGui::PushFont(NULL, ImGui::GetStyle().FontSizeBase * 0.85f);   /* a bit smaller, so the columns fit */
 
     const ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit |
                                   ImGuiTableFlags_ScrollY;
     if (ImGui::BeginTable("Games", 3, flags, ImVec2(0.0f, ImGui::GetContentRegionAvail().y))) {
-        ImGui::TableSetupColumn("TITLE");
-        ImGui::TableSetupColumn("ROM NAME");
-        ImGui::TableSetupColumn("BOARD");
+        /* TITLE takes the room left; ROM and BOARD are as wide as their contents */
+        ImGui::TableSetupColumn("TITLE", ImGuiTableColumnFlags_WidthStretch);
+        ImGui::TableSetupColumn("ROM", ImGuiTableColumnFlags_WidthFixed);
+        ImGui::TableSetupColumn("BOARD", ImGuiTableColumnFlags_WidthFixed);
         ImGui::TableSetupScrollFreeze(0, 1);   /* the header row stays on screen */
         /* plain header row: labels only, so the pad cursor can't land on them */
         ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
