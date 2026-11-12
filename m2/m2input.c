@@ -182,9 +182,10 @@ static void update_driving(m2_input_state *s, int steer_max)
 {
     const int16_t *ax = s->axis[0];
     const uint8_t *pb = s->pad[0];
-#ifdef NX_PEDALS   /* the d-pad is the view buttons; A / B are the pedals */
+#ifdef NX_PEDALS   /* the d-pad is the view buttons; A / B are the pedals, all or nothing */
     int left = s->key[0xcb], right = s->key[0xcd];
-    int up = s->key[0xc8] || pb[PAD_ACCEL], down = s->key[0xd0] || pb[PAD_BRAKE];
+    int up = s->key[0xc8], down = s->key[0xd0];
+    int pad_up = pb[PAD_ACCEL], pad_down = pb[PAD_BRAKE];
 #else
     int left = s->key[0xcb] || pb[M2PAD_LEFT], right = s->key[0xcd] || pb[M2PAD_RIGHT];
     int up = s->key[0xc8], down = s->key[0xd0];
@@ -210,6 +211,14 @@ static void update_driving(m2_input_state *s, int steer_max)
     if (s->steer_u < -(float)(steer_max == 125 ? 126 : 127)) s->steer_u = -(float)(steer_max == 125 ? 126 : 127);
 
     float rt = trigger(ax[M2PAD_RT]), lt = trigger(ax[M2PAD_LT]);
+#ifdef NX_PEDALS   /* A / B: the pedal goes to the floor at once, and back at once */
+    if (pad_up) rt = 1.0f;
+    if (pad_down) lt = 1.0f;
+    if (rt == 0 && !up && s->pad_pedal[0]) s->accel_u = 1.0f;
+    if (lt == 0 && !down && s->pad_pedal[1]) s->brake_u = 1.0f;
+    s->pad_pedal[0] = rt > 0;
+    s->pad_pedal[1] = lt > 0;
+#endif
     if (rt > 0) s->accel_u = 1.0f + rt * 253.0f;
     else if (up) { if (s->accel_u < 254.0f) s->accel_u += 8.0f; }
     else if (s->accel_u > 1.0f) s->accel_u -= 8.0f;

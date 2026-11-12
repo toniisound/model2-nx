@@ -31,6 +31,7 @@ typedef struct {
     uint8_t gear_up_held[2], gear_down_held[2];
     uint8_t shift_keys_prev;       /* keyboard gear keys last frame (bit k = Shift k, bit 0 = neutral) */
     float   steer_u, accel_u, brake_u;   /* original's units: -128..127, 1..254 */
+    uint8_t pad_pedal[2];                /* Switch: accelerator / brake held on the pad last frame */
 
     /* options (the original's EMULATOR.INI [Input]) */
     int     updown_gears;          /* UpDownGears: gear keys 1/2 shift down/up */
