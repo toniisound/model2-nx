@@ -1,4 +1,8 @@
 <p align="center">
+  <img src="docs/model2-nx-logo.png" alt="Model 2 NX" width="720">
+</p>
+
+<p align="center">
   <img src="docs/logo.png" alt="Model 2 NX" width="720">
 </p>
 
