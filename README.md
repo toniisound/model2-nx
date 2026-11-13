@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/logo.png" alt="Model 2 NX" width="720">
+  <img src="docs/readme-logo.png" alt="Model 2 NX" width="720">
 </p>
 
 # Model2-NX
