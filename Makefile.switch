@@ -13,7 +13,7 @@ endif
 
 include $(DEVKITPRO)/libnx/switch_rules
 
-APP_TITLE   := Model2-NX
+APP_TITLE   := Model2 NX
 APP_AUTHOR  := Toniisound
 APP_VERSION := 1.0
 ICON        := switch/icon.jpg

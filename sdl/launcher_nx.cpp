@@ -44,7 +44,7 @@
 #include "stb_image.h"
 #pragma GCC diagnostic pop
 
-#define APP_NAME    "Model2-NX"
+#define APP_NAME    "Model2 NX"
 #define APP_VERSION "1.0"
 
 #ifdef __SWITCH__
