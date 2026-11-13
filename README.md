@@ -1,6 +1,8 @@
 <p align="center">
   <img src="docs/readme-logo.png" alt="Model 2 NX" width="720">
 </p>
+<br>
+
 
 
 A Nintendo Switch homebrew port (`.nro`) of
